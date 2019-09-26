@@ -90,7 +90,7 @@ def interpolate_missing_frames(target_list):
 
   return target_list
 
-def sample_targets(tracker_list, object_durations, mean_duration = 75):
+def sample_targets(tracker_list, object_durations, min_duration = 30, mean_duration = 45):
   target_list = []
   next_switch_frame = -1
   for (frame_idx, frame_objects) in enumerate(tracker_list):
@@ -102,9 +102,9 @@ def sample_targets(tracker_list, object_durations, mean_duration = 75):
       current_target_idx = np.random.choice(range(len(weights)), p = weights)
       current_target = tracker_list[frame_idx][current_target_idx][0]
       next_switch_frame = object_durations[current_target][1]
-      next_switch_frame = min(next_switch_frame, frame_idx + 75) # np.random.exp(mean_duration))
+      next_switch_frame = min(next_switch_frame, frame_idx + min_duration + int(np.random.exponential(mean_duration)))
       while current_target not in [obj[0] for obj in tracker_list[next_switch_frame]]:
-        next_switch_frame = min(next_switch_frame, frame_idx + 150) # np.random.exp(mean_duration))
+        next_switch_frame = min(next_switch_frame, frame_idx + min_duration + int(np.random.exponential(mean_duration)))
       # TODO: Exponential random variable with mean mean_duration
       # However, we need to check that we only switch on non-missing frames
 
