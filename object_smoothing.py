@@ -1,16 +1,14 @@
-import pickle
-import sys, time
+import pickle, sys, time
 from copy import deepcopy
 import cv2 # Use OpenCV to display video
 import numpy as np
 
 from centroidtracker import CentroidTracker, calc_centroid
 
-horz_scale = 0.6
-vert_scale = 0.6
-video_idx = 13
+horz_scale = 0.8
+vert_scale = 0.8
 
-def smooth_objects(all_frames):
+def _smooth_objects(all_frames):
   tracker_list = [] 
   # Since we assume that objects cannot change types, we separately run the
   # object tracking algorithm for each object type
@@ -39,12 +37,9 @@ def smooth_objects(all_frames):
 
     tracker_list.append(new_frame_list)
 
-    # TODO: Replace numerical obj ID with obj_type + '_' + str(ID) string
-  # for (frame_idx, objects) in enumerate(tracker_list):
-  #   print('Frame ' + str(frame_idx) + ': ' + str(objects))
   return tracker_list
 
-def compute_durations(tracker_list):
+def _compute_durations(tracker_list):
   object_durations = {}
   for (frame_idx, frame_list) in enumerate(tracker_list):
     for obj in frame_list:
@@ -60,7 +55,7 @@ def compute_durations(tracker_list):
 #             (object_durations[obj[0]][1] - object_durations[obj[0]][0]) >= min_duration]
 #             for frame_list in tracker_list]
 
-def interpolate_missing_frames(target_list):
+def _interpolate_missing_frames(target_list):
   prev_good_frame = 0
   for frame_idx in range(len(target_list)):
     if prev_good_frame < frame_idx - 1: # if previous frames were missing
@@ -68,21 +63,21 @@ def interpolate_missing_frames(target_list):
 
         # Objects should only change on non-missing frames
         target_name = target_list[prev_good_frame][0]
-        assert(target_name == target_list[frame_idx][0])
+        if target_name == target_list[frame_idx][0]:
 
-        # Get first and last non-missing boxes to interpolate between
-        prev_good_box = target_list[prev_good_frame][1]
-        current_box = target_list[frame_idx][1]
+          # Get first and last non-missing boxes to interpolate between
+          prev_good_box = target_list[prev_good_frame][1]
+          current_box = target_list[frame_idx][1]
 
-        num_parts = frame_idx - prev_good_frame
-        for frame_to_interpolate in range(prev_good_frame + 1, frame_idx):
-          interpolation_idx = frame_to_interpolate - prev_good_frame
-          interpolate = lambda x, y : int(x + interpolation_idx/num_parts * (y - x))
-          interpolated_box = (interpolate(prev_good_box[0], current_box[0]),
-                              interpolate(prev_good_box[1], current_box[1]),
-                              interpolate(prev_good_box[2], current_box[2]),
-                              interpolate(prev_good_box[3], current_box[3]))
-          target_list[frame_to_interpolate] = (target_name, interpolated_box)
+          num_parts = frame_idx - prev_good_frame
+          for frame_to_interpolate in range(prev_good_frame + 1, frame_idx):
+            interpolation_idx = frame_to_interpolate - prev_good_frame
+            interpolate = lambda x, y : int(x + interpolation_idx/num_parts * (y - x))
+            interpolated_box = (interpolate(prev_good_box[0], current_box[0]),
+                                interpolate(prev_good_box[1], current_box[1]),
+                                interpolate(prev_good_box[2], current_box[2]),
+                                interpolate(prev_good_box[3], current_box[3]))
+            target_list[frame_to_interpolate] = (target_name, interpolated_box)
 
     if target_list[frame_idx] is not None:
       # All frames before (and including) frame_idx have been filled in
@@ -90,22 +85,33 @@ def interpolate_missing_frames(target_list):
 
   return target_list
 
-def sample_targets(tracker_list, object_durations, min_duration = 30, mean_duration = 45):
+def _sample_targets(tracker_list, object_durations, min_duration = 30, mean_duration = 45):
   target_list = []
   next_switch_frame = -1
   for (frame_idx, frame_objects) in enumerate(tracker_list):
 
     if frame_idx > next_switch_frame:
-      # weights = np.array([1 for obj in tracker_list[frame_idx]])
+      # Weight each object by its remaining duration to prefer longer-lasting objects
       weights = np.array([object_durations[obj[0]][1] - frame_idx for obj in tracker_list[frame_idx]])
+      if np.sum(weights) < sys.float_info.epsilon: # No objects were found in tracker_list
+        target_list.append(None)
+        continue
       weights = weights / weights.sum()
       current_target_idx = np.random.choice(range(len(weights)), p = weights)
       current_target = tracker_list[frame_idx][current_target_idx][0]
       next_switch_frame = object_durations[current_target][1]
       next_switch_frame = min(next_switch_frame, frame_idx + min_duration + int(np.random.exponential(mean_duration)))
+      attempt = 0
       while current_target not in [obj[0] for obj in tracker_list[next_switch_frame]]:
+        attempt += 1
+        if attempt % 100 == 0:
+          print(attempt)
+        if attempt > 1000:
+          # For some objects/frames, we may not be able to find a valid next_swith_frame even after many attempts.
+          # In this case, simply switch on the very next frame
+          next_switch_frame = frame_idx
+          break
         next_switch_frame = min(next_switch_frame, frame_idx + min_duration + int(np.random.exponential(mean_duration)))
-      # TODO: Exponential random variable with mean mean_duration
       # However, we need to check that we only switch on non-missing frames
 
     found_target = False
@@ -116,13 +122,16 @@ def sample_targets(tracker_list, object_durations, min_duration = 30, mean_durat
     if not found_target:
       target_list.append(None)
 
-  return interpolate_missing_frames(target_list)
+  return _interpolate_missing_frames(target_list)
 
-def smooth_and_display_objects():
+def smooth_and_display_objects(video_idx):
 
-  tracker_list = smooth_objects(all_frames)
-  object_durations = compute_durations(tracker_list)
-  target_list = sample_targets(tracker_list, object_durations)
+  # Load object data, smooth over time, and select a sequence of targets
+  with open('data/detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
+    all_frames = pickle.load(in_file)
+  tracker_list = _smooth_objects(all_frames)
+  object_durations = _compute_durations(tracker_list)
+  target_list = _sample_targets(tracker_list, object_durations)
 
   video = cv2.VideoCapture('data/MOT17_videos/' + str(video_idx).zfill(2) + '.mp4')
 
@@ -150,24 +159,21 @@ def smooth_and_display_objects():
 
         cv2.imshow('Video Frame', frame) # Display current frame
         cv2.waitKey(1)
-        
         nextFrameExists, frame = video.read() # Load next video frame
-        height, width, _ =  frame.shape
-        frame = cv2.resize(frame, (int(horz_scale * width), int(vert_scale * height))) # rescale by horz_scale * vert_scale
+        if nextFrameExists:
+          frame = cv2.resize(frame, (int(horz_scale * width), int(vert_scale * height))) # rescale by horz_scale * vert_scale
 
-        # Draw ellipse around and label target object
-        object_ID, b = target_list[current_frame]
-        centroid = calc_centroid(b)
-        centroid = (int(horz_scale * centroid[0]), int(vert_scale * centroid[1]))
-        cv2.putText(frame, object_ID, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        cv2.ellipse(frame, centroid, (int(horz_scale * (b[2] - b[0])/2), int(vert_scale * (b[3] - b[1])/2)), 0, 0, 360, color = (0, 255, 0), thickness = 2)
+          # Draw ellipse around and label target object
+          if target_list[current_frame] is not None: # This happens as long as there is at least one detected object on screen
+            object_ID, b = target_list[current_frame]
+            centroid = calc_centroid(b)
+            centroid = (int(horz_scale * centroid[0]), int(vert_scale * centroid[1]))
+            cv2.putText(frame, object_ID, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.ellipse(frame, centroid, (int(horz_scale * (b[2] - b[0])/2), int(vert_scale * (b[3] - b[1])/2)), 0, 0, 360, color = (0, 255, 0), thickness = 2)
 
         current_frame += 1
 
   video.release()
   cv2.destroyAllWindows()
 
-with open('data/detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
-  all_frames = pickle.load(in_file)
-
-smooth_and_display_objects()
+smooth_and_display_objects(video_idx = 9)
