@@ -3,7 +3,9 @@ from copy import deepcopy
 import cv2 # Use OpenCV to display video
 import numpy as np
 
+sys.path.insert(1, '../util')
 from centroidtracker import CentroidTracker, calc_centroid
+data_path = '../../data/'
 
 horz_scale = 0.8
 vert_scale = 0.8
@@ -127,13 +129,13 @@ def _sample_targets(tracker_list, object_durations, min_duration = 30, mean_dura
 def smooth_and_display_objects(video_idx):
 
   # Load object data, smooth over time, and select a sequence of targets
-  with open('data/detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
+  with open(data_path + 'detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
     all_frames = pickle.load(in_file)
   tracker_list = _smooth_objects(all_frames)
   object_durations = _compute_durations(tracker_list)
   target_list = _sample_targets(tracker_list, object_durations)
 
-  video = cv2.VideoCapture('data/MOT17_videos/' + str(video_idx).zfill(2) + '.mp4')
+  video = cv2.VideoCapture(data_path + 'MOT17_videos/' + str(video_idx).zfill(2) + '.mp4')
 
   # Get basic video information
   FPS = video.get(cv2.CAP_PROP_FPS) # natural frame rate
