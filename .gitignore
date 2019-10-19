@@ -1,6 +1,9 @@
 # Old scripts used to get the object detector working
 old/
 
+# Object detector model weights
+code/object_detector/resnet50_coco_best_v2.0.1.h5
+
 # MOT17 videos used to generate stimuli
 MOT17/
 data/MOT17_videos/
