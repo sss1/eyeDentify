@@ -1,3 +1,10 @@
+# Old scripts used to get the object detector working
+old/
+
+# MOT17 videos used to generate stimuli
+MOT17/
+data/MOT17_videos/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
