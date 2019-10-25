@@ -1,17 +1,23 @@
 # This module performs the analyses for Experiment 1: Guided Viewing with Detected Targets
+# import numpy as np
+import pickle
 
-# Data is loaded and stored as an array of "subjects", each of which is an array of trials
+import load_and_preprocess_data
 
-num_subjects = 1
-data_dir = '../../data/experiment1/'
+# Load participant data
+num_participants = 1
+# participants = [load_and_preprocess_data.load_participant(i) for i in range(num_participants)]
+# participants = load_participants(num_participants)
 
-class TrialData:
-  def __init__(self, video_idx, eyetrack, stimulus):
-    self.video_idx = video_idx
-    self.eyetrack = eyetrack
-    self.stimulus = stimulus
+# Load object detection data
+detected_objects = []
+for video_idx in range(1, 15):
+  with open('../../data/detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
+    detected_objects.append(pickle.load(in_file))
 
-def load_subject(subjectID):
-  subject = []
-  # TODO: load subject trials
-  return subject
+# for participant in participants:
+  # TODO:
+  # 1) Load object detection data
+  # 2) Run HMM
+  # 3) Omit data for 300 ms after each target switch
+  # 4) Compute agreement between target and HMM
