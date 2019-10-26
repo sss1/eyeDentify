@@ -1,5 +1,9 @@
 import csv, sys
-# import numpy as np
+# import matplotlib.pyplot as plt
+import numpy as np
+
+sys.path.insert(1, '../util')
+import util
 
 experiment_data_dir = '../../data/experiment1/'
 
@@ -19,17 +23,8 @@ class Frame:
     self.target_size = (targetXRadius, targetYRadius)
 
   def set_eyetrack(self, gazeX, gazeY, diam):
-    self.has_gaze = gazeX > 0.0 and gazeY > 0.0
-    if self.has_gaze:
-      self.gaze = (gazeX, gazeY)
-    else:
-      self.gaze = (float('nan'), float('nan'))
-
-    self.has_diam = diam > 0.0
-    if self.has_diam:
-      self.diam = diam
-    else:
-      self.diam = float('nan')
+    self.gaze = (gazeX, gazeY)
+    self.diam = diam
 
 def load_eyetrack(participantID):
   fname = experiment_data_dir + str(participantID).zfill(2) + '_eyetracking.csv'
@@ -49,12 +44,14 @@ def load_eyetrack(participantID):
         eyetrack.append([timestamp, gazeX, gazeY, diam])
       row_num += 1
   print('Loading ' + str(row_num) + ' eyetracking frames from ' + fname + '.')
-  return eyetrack#np.array(eyetrack)
+  return np.array(eyetrack)
 
 # For GazeX, GazeY, and Diam, we get separate left and right eye measurements.
-# Missing values are encoded as 0.0. If either eye's data is missing, take the
-# other eye's data; else, take the average.
+# Missing values are recoded from 0.0 to NaN. If one eye's data is missing,
+# take the other eye's data; else, take the average.
 def get_best(left, right):
+  if left < sys.float_info.epsilon:
+    return float('nan')
   if left < sys.float_info.epsilon:
     return right
   if right < sys.float_info.epsilon:
@@ -83,23 +80,32 @@ def load_stimulus(participantID):
       row_num += 1
   return frames
 
-def interpolate_missing_eyetracking_data(eyetrack):
-  # TODO: Interpolate missing eye-tracking data
-  raise NotImplementedError
-
 def synchronize_eyetracking_with_stimulus(eyetrack, frames):
-  raise NotImplementedError
-  for (eyetrack_frame, frame) in zip(eyetrack, frames):
-  # TODO: Re-align eye-tracking data to stimulus frames by linearly interpolating
-  # gaze and diam from surrounding eyetracking frames
-    frame.set_eyetrack(*eyetrack_frame[1:])
+  eyetrack_idx = 0
+  if eyetrack[0, 0] >= frames[0].t:
+    raise ValueError('Eye-tracking starts after stimulus.')
+  if eyetrack[-1, 0] <= frames[-1].t:
+    raise ValueError('Eye-tracking ends before stimulus.')
+  for frame in frames:
+    while eyetrack[eyetrack_idx, 0] < frame.t:
+      eyetrack_idx += 1
+    t0, t1 = eyetrack[(eyetrack_idx - 1):(eyetrack_idx + 1), 0]
+    # At this point, t0 <= frame.t < t1
+    # We linearly interpolate x and y based on the surrounding x0, x1, y0, and y1
+    theta = (frame.t - t0)/(t1 - t0)
+    gazeX, gazeY, diam = (1 - theta) * eyetrack[eyetrack_idx - 1, 1:] + theta * eyetrack[eyetrack_idx, 1:]
+    frame.set_eyetrack(gazeX, gazeY, diam)
 
 def load_participant(participantID):
   eyetrack = load_eyetrack(participantID)
+  print('# of NaNs before interpolation: ' + str(np.count_nonzero(np.isnan(eyetrack))))
   frames = load_stimulus(participantID)
-  interpolate_missing_eyetracking_data(eyetrack)
+  util.impute_missing_data_D(eyetrack, max_len = 10)
+  print('# of NaNs after  interpolation: ' + str(np.count_nonzero(np.isnan(eyetrack))))
   synchronize_eyetracking_with_stimulus(eyetrack, frames)
-  # print('Data from first 5 frames:')
-  # for f in frames[:5]:
-  #   print(vars(f))
+  print('Data from first 5 frames:')
+  for f in frames[:5]:
+    print(vars(f))
   return Participant(participantID, frames)
+
+print(load_participant(0))

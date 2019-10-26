@@ -34,7 +34,7 @@ def _smooth_objects(all_frames):
           # match each ID with its bounding box by centroid; this solution implicitly assumes each object of a
           # specified type within each frame has a distinct centroid
             obj_centroid = calc_centroid(obj['box_points'])
-            if (abs(obj_centroid[0] - centroid[0]) < sys.float_info.epsilon) and (abs(obj_centroid[1] - centroid[1]) < sys.float_info.epsilon):
+            if max(abs(obj_centroid[0] - centroid[0]), abs(obj_centroid[1] - centroid[1])) < sys.float_info.epsilon:
               new_frame_list.append((new_ID, obj['box_points']))
 
     tracker_list.append(new_frame_list)

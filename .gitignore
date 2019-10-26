@@ -1,5 +1,6 @@
 # Old scripts used to get the object detector working
 old/
+code/analysis_code/GCP/
 
 # Object detector model weights
 code/object_detector/resnet50_coco_best_v2.0.1.h5
