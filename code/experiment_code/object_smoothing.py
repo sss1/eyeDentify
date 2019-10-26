@@ -51,12 +51,6 @@ def _compute_durations(tracker_list):
         object_durations[obj[0]] = (frame_idx, frame_idx)
   return object_durations
 
-# # This function removes objects from tracker_list if they will exist for fewer than min_duration frames past current_frame
-# def remove_brief_objects(tracker_list, object_durations, current_frame, min_duration = 15):
-#   return [[obj for obj in frame_list if
-#             (object_durations[obj[0]][1] - object_durations[obj[0]][0]) >= min_duration]
-#             for frame_list in tracker_list]
-
 def _interpolate_missing_frames(target_list):
   prev_good_frame = 0
   for frame_idx in range(len(target_list)):
