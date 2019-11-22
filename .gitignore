@@ -1,6 +1,9 @@
 # Example video output by object detector
 code/object_detector/labeled_video.avi
 
+# Data files
+data/
+
 # Old scripts used to get the object detector working
 old/
 code/analysis_code/GCP/
