@@ -9,7 +9,7 @@ data_dir_in = '../../data/MOT17_videos'
 data_dir_out = '../../data/detected_objects'
 
 num_videos = 14
-detection_confidence_thresholds = [30, 60, 90]
+detection_confidence_thresholds = [40, 60, 80]
 for video_idx in range(1, num_videos + 1):
 
   input_file_path = \
