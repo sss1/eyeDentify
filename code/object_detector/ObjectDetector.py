@@ -3,7 +3,7 @@
 from imageai.Detection import VideoObjectDetection
 
 def detect_objects(input_file_path, detection_confidence_threshold = 60):
-  # detection_confidence_threshold is the minimum detector confidence needed to include an object
+  # detection_confidence_threshold (int between 1 and 99) is the minimum detector confidence needed to include an object
   
   # Create object detector based on RetinaNet and load model weights
   detector = VideoObjectDetection()
@@ -15,7 +15,8 @@ def detect_objects(input_file_path, detection_confidence_threshold = 60):
   # Generates a record of all objects detected
   def forFrame(frame_number, output_array, output_count):
     all_frames.append(output_array)
-    print(frame_number)
+    if frame_number % 100 == 0:
+      print(input_file_path + ' Frame ' + str(frame_number))
 
   detector.detectObjectsFromVideo(input_file_path = input_file_path,
                                   output_file_path = 'labeled_video',
