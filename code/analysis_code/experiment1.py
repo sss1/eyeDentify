@@ -3,6 +3,9 @@
 import pickle, sys
 
 import load_and_preprocess_data
+sys.path.insert(1, '../util')
+import util
+from centroidtracker import CentroidTracker, calc_centroid
 
 sys.path.insert(1, '../util')
 import centroidtracker
@@ -16,7 +19,9 @@ participants = [load_and_preprocess_data.load_participant(i) for i in range(num_
 detected_objects = []
 for video_idx in range(1, 15):
   with open('../../data/detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
-    detected_objects.append(pickle.load(in_file))
+    all_frames = pickle.load(in_file)
+  detected_objects.append(util.smooth_objects(all_frames))
+
 
 for participant in participants:
   for (experiment_video_data, video_objects) in zip(participant.frames_by_video, detected_objects):
