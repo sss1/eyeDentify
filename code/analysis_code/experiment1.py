@@ -15,12 +15,13 @@ num_participants = 1
 participants = [load_and_preprocess_data.load_participant(i) for i in range(num_participants)]
 
 # Load object detection data
-# TODO: Apply centroid tracker to detected objects using object_smoothing._smooth_objects()
 detected_objects = []
 for video_idx in range(1, 15):
   with open('../../data/detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
     all_frames = pickle.load(in_file)
   detected_objects.append(util.smooth_objects(all_frames))
+
+# TODO: Build ObjectTrajectory objects of each object
 
 
 for participant in participants:
