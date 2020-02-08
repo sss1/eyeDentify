@@ -4,29 +4,27 @@ import numpy as np
 
 sys.path.insert(1, '../util')
 import util
+import experiment_frame
+import object_frame
+import object_trajectory
 
 experiment_data_dir = '../../data/experiment1/'
 
+Y_CORRECTION = -60
+
+def align_gaze_to_stimulus(gaze_x, gaze_y):
+  """Due to the top menu bar, the video is displayed 60 pixels lower than its
+  nominal coordinates. To align the eyetracking and the video, we subtract 60
+  from the eyetracking y-coordinates.
+  """
+  return gaze_x, gaze_y + Y_CORRECTION
+
 class Participant:
-  def __init__(self, ID, frames):
+  def __init__(self, ID, frames_by_video):
     self.ID = ID
-    self.frames = frames
+    self.frames_by_video = frames_by_video
 
-class Frame:
-  def __init__(self, t, video_idx, video_frame, target_name, targetX, targetY, targetXRadius, targetYRadius):
-    self.t = t # float timestamp at which frame was displayed
-    self.video_idx = video_idx # int between 1 and 14 (inclusive) indicating which video is being displayed
-    self.video_frame = video_frame # int frame number in video indicated by video_idx
-    self.target_class = target_name.split('_')[0] # string indicating class of target object (e.g., 'person' or 'car')
-    self.target_idx = int(target_name.split('_')[1]) # int index of the target object within that class and video
-    self.target_centroid = (targetX, targetY)
-    self.target_size = (targetXRadius, targetYRadius)
-
-  def set_eyetrack(self, gazeX, gazeY, diam):
-    self.gaze = (gazeX, gazeY)
-    self.diam = diam
-
-def load_eyetrack(participantID):
+def load_eyetrack(participantID : int):
   fname = experiment_data_dir + str(participantID).zfill(2) + '_eyetracking.csv'
   with open(fname, 'r') as f:
     reader = csv.reader(f, delimiter=',')
@@ -38,10 +36,10 @@ def load_eyetrack(participantID):
         # Timestamp,AvgGazeX,AvgGazeY,LeftGazeX,LeftGazeY,RightGazeX,RightGazeY,LeftDiam,RightDiam
         row = [float(x) for x in row]
         timestamp = row[0]
-        gazeX = get_best(row[3], row[5])
-        gazeY = get_best(row[4], row[6])
+        gaze_x, gaze_y = align_gaze_to_stimulus(get_best(row[3], row[5]),
+                                                get_best(row[4], row[6]))
         diam = get_best(row[7], row[8])
-        eyetrack.append([timestamp, gazeX, gazeY, diam])
+        eyetrack.append([timestamp, gaze_x, gaze_y, diam])
       row_num += 1
   print('Loading ' + str(row_num) + ' eyetracking frames from ' + fname + '.')
   return np.array(eyetrack)
@@ -74,8 +72,14 @@ def load_stimulus(participantID):
         if video_idx != current_video:
           video_frame = 0
           current_video = video_idx
-        targetX, targetY, targetXRadius, targetYRadius = float(row[3]), float(row[4]), float(row[5]), float(row[6])
-        frames.append(Frame(t, video_idx, video_frame, target_name, targetX, targetY, targetXRadius, targetYRadius))
+        targetX = float(row[3])
+        targetY = float(row[4]) + Y_CORRECTION
+        targetXRadius = float(row[5])
+        targetYRadius = float(row[6])
+        target = object_frame.ObjectFrame(t, video_idx, video_frame,
+                                          target_name, targetX, targetY,
+                                          targetXRadius, targetYRadius)
+        frames.append(experiment_frame.ExperimentFrame(target))
         video_frame += 1
       row_num += 1
   return frames
@@ -98,14 +102,11 @@ def synchronize_eyetracking_with_stimulus(eyetrack, frames):
 
 def load_participant(participantID):
   eyetrack = load_eyetrack(participantID)
-  print('# of NaNs before interpolation: ' + str(np.count_nonzero(np.isnan(eyetrack))))
+  print('# of NaNs before interpolation: {}'.format(np.count_nonzero(np.isnan(eyetrack))))
   frames = load_stimulus(participantID)
   util.impute_missing_data_D(eyetrack, max_len = 10)
-  print('# of NaNs after  interpolation: ' + str(np.count_nonzero(np.isnan(eyetrack))))
+  print('# of NaNs after  interpolation: {}\n'.format(np.count_nonzero(np.isnan(eyetrack))))
   synchronize_eyetracking_with_stimulus(eyetrack, frames)
-  print('Data from first 5 frames:')
-  for f in frames[:5]:
-    print(vars(f))
-  return Participant(participantID, frames)
+  frames_by_video = [[f for f in frames if f.video_idx == video_idx] for video_idx in range(1, 15)]
 
-print(load_participant(0))
+  return Participant(participantID, frames_by_video)
