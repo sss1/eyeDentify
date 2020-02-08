@@ -5,7 +5,7 @@ import pickle, sys
 import load_and_preprocess_data
 sys.path.insert(1, '../util')
 import util
-from centroidtracker import CentroidTracker, calc_centroid
+import centroidtracker
 
 sys.path.insert(1, '../util')
 import centroidtracker
@@ -28,7 +28,7 @@ for participant in participants:
     # TODO: Initialize HMM here
     for (experiment_frame_data, detected_objects_in_frame) in zip(experiment_video_data, video_objects):
       print(experiment_frame_data.gaze, experiment_frame_data.target.centroid)
-      print([centroidtracker.calc_centroid(obj['box_points']) for obj in detected_objects_in_frame])
+      print([centroidtracker.calc_centroid(obj[1]) for obj in detected_objects_in_frame])
       print()
       # TODO: Update HMM here
 

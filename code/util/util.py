@@ -1,5 +1,8 @@
 import numpy as np
 import math
+import sys
+
+import centroidtracker
 
 # Given a sequence X of D-dimensional vectors, performs __impute_missing_data (independently) on each dimension of X
 # X is N X D, where D is the dimensionality and N is the sample length
@@ -33,3 +36,69 @@ def __impute_missing_data(X, max_len):
       if n - (max_len + 1) <= last_valid_idx: # amount of missing data is at most than max_len
         X[last_valid_idx:] = X[last_valid_idx]
   return X
+
+# Given a list (over frames) of objects detected by the object detector in each frame,
+# Stitches them together into object tracking data
+def smooth_objects(all_frames):
+  tracker_list = [] 
+  # Since we assume that objects cannot change types, we separately run the
+  # object tracking algorithm for each object type
+  obj_classes = [obj['name'] for frame in all_frames for obj in frame]
+  # print('Unique object types: ' + str(set(obj_classes)))
+  obj_class_counts = [(name, obj_classes.count(name)) for name in set(obj_classes)]
+  print('Object class counts: ' + str(obj_class_counts))
+
+  # Initialize a centroid tracker for each object type
+  trackers = {obj_type : centroidtracker.CentroidTracker(maxDisappeared = 15)
+              for obj_type in set(obj_classes)}
+
+  for (frame_idx, frame) in enumerate(all_frames):
+
+    new_frame_list = []
+    for obj_type in set(obj_classes):
+      trackers[obj_type].update([obj['box_points'] for obj in frame if obj['name'] is obj_type]) # Update the centroid tracker
+
+      for (ID, centroid) in trackers[obj_type].objects.items():
+        new_ID = obj_type + '_' + str(ID) # Concatenate object type with object ID
+        for obj in frame:
+          if obj['name'] is obj_type:
+          # Since we need to output (ID, bounding box) and Centroid Tracker doesn't record bounding boxes
+          # match each ID with its bounding box by centroid; this solution implicitly assumes each object of a
+          # specified type within each frame has a distinct centroid
+            obj_centroid = centroidtracker.calc_centroid(obj['box_points'])
+            if max(abs(obj_centroid[0] - centroid[0]), abs(obj_centroid[1] - centroid[1])) < sys.float_info.epsilon:
+              new_frame_list.append((new_ID, obj['box_points']))
+
+    tracker_list.append(new_frame_list)
+
+  return tracker_list
+
+def _interpolate_missing_frames(target_list):
+  prev_good_frame = 0
+  for frame_idx in range(len(target_list)):
+    if prev_good_frame < frame_idx - 1: # if previous frames were missing
+      if target_list[frame_idx] is not None: # if current frame is non-missing, we need to interpolate till here
+
+        # Objects should only change on non-missing frames
+        target_name = target_list[prev_good_frame][0]
+        if target_name == target_list[frame_idx][0]:
+
+          # Get first and last non-missing boxes to interpolate between
+          prev_good_box = target_list[prev_good_frame][1]
+          current_box = target_list[frame_idx][1]
+
+          num_parts = frame_idx - prev_good_frame
+          for frame_to_interpolate in range(prev_good_frame + 1, frame_idx):
+            interpolation_idx = frame_to_interpolate - prev_good_frame
+            interpolate = lambda x, y : int(x + interpolation_idx/num_parts * (y - x))
+            interpolated_box = (interpolate(prev_good_box[0], current_box[0]),
+                                interpolate(prev_good_box[1], current_box[1]),
+                                interpolate(prev_good_box[2], current_box[2]),
+                                interpolate(prev_good_box[3], current_box[3]))
+            target_list[frame_to_interpolate] = (target_name, interpolated_box)
+
+    if target_list[frame_idx] is not None:
+      # All frames before (and including) frame_idx have been filled in
+      prev_good_frame = frame_idx
+
+  return target_list
