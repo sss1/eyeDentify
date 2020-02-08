@@ -1,8 +1,11 @@
 # This module performs the analyses for Experiment 1: Guided Viewing with Detected Targets
 # import numpy as np
-import pickle
+import pickle, sys
 
 import load_and_preprocess_data
+sys.path.insert(1, '../util')
+import util
+from centroidtracker import CentroidTracker, calc_centroid
 
 # Load participant data
 num_participants = 1
@@ -13,7 +16,9 @@ num_participants = 1
 detected_objects = []
 for video_idx in range(1, 15):
   with open('../../data/detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
-    detected_objects.append(pickle.load(in_file))
+    all_frames = pickle.load(in_file)
+  detected_objects.append(util.smooth_objects(all_frames))
+
 
 # for participant in participants:
   # TODO:
