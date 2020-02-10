@@ -3,33 +3,34 @@
 import pickle, sys
 
 import load_and_preprocess_data
-sys.path.insert(1, '../util')
 import util
 import centroidtracker
 
-sys.path.insert(1, '../util')
-import centroidtracker
+from typing import List
+
+import participant
+
+VIDEOS = range(1, 2)
+NUM_PARTICIPANTS = 1
 
 # Load participant data
-num_participants = 1
-participants = [load_and_preprocess_data.load_participant(i) for i in range(num_participants)]
+participants: List[participant.Participant] = [load_and_preprocess_data.load_participant(i) for i in range(NUM_PARTICIPANTS)]
+
+print('Loaded data from {} participants.'.format(NUM_PARTICIPANTS))
 
 # Load object detection data
 detected_objects = []
-for video_idx in range(1, 15):
+for video_idx in VIDEOS:
   with open('../../data/detected_objects/' + str(video_idx).zfill(2) + '.pickle', 'rb') as in_file:
     all_frames = pickle.load(in_file)
   detected_objects.append(util.smooth_objects(all_frames))
 
-# TODO: Build ObjectTrajectory objects of each object
-
-
 for participant in participants:
-  for (experiment_video_data, video_objects) in zip(participant.frames_by_video, detected_objects):
+  for (experiment_video_data, video_objects) in zip(participant.videos, detected_objects):
     # TODO: Initialize HMM here
-    for (experiment_frame_data, detected_objects_in_frame) in zip(experiment_video_data, video_objects):
-      print(experiment_frame_data.gaze, experiment_frame_data.target.centroid)
-      print([centroidtracker.calc_centroid(obj[1]) for obj in detected_objects_in_frame])
+    for (experiment_frame_data, detected_objects_in_frame) in zip(experiment_video_data.frames, video_objects):
+      print(experiment_frame_data.gaze, experiment_frame_data.target.centroid, experiment_frame_data.target.class_name)
+      print([obj.centroid for obj in detected_objects_in_frame])
       print()
       # TODO: Update HMM here
 

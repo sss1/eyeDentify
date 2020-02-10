@@ -1,30 +1,28 @@
 import csv, sys
-# import matplotlib.pyplot as plt
 import numpy as np
 
-sys.path.insert(1, '../util')
+from typing import List, Tuple
+
 import util
 import experiment_frame
+import experiment_video
 import object_frame
-import object_trajectory
+import participant
 
 experiment_data_dir = '../../data/experiment1/'
-
+VIDEOS = range(1, 15)
 Y_CORRECTION = -60
 
-def align_gaze_to_stimulus(gaze_x, gaze_y):
-  """Due to the top menu bar, the video is displayed 60 pixels lower than its
-  nominal coordinates. To align the eyetracking and the video, we subtract 60
-  from the eyetracking y-coordinates.
+def align_display_to_video(gaze_x: float, gaze_y: float) -> Tuple[float, float]:
+  """Aligns coordinates of displayed video/gaze to the raw video coordinates.
+  
+  Due to the top menu bar, the displayed video is 60 pixels lower than its
+  nominal coordinates. To align the experiment with nominal positions of objects
+  in the video, we subtract 60 from the experiment y-coordinates.
   """
   return gaze_x, gaze_y + Y_CORRECTION
 
-class Participant:
-  def __init__(self, ID, frames_by_video):
-    self.ID = ID
-    self.frames_by_video = frames_by_video
-
-def load_eyetrack(participantID : int):
+def load_eyetrack(participantID : int) -> np.ndarray:
   fname = experiment_data_dir + str(participantID).zfill(2) + '_eyetracking.csv'
   with open(fname, 'r') as f:
     reader = csv.reader(f, delimiter=',')
@@ -36,7 +34,7 @@ def load_eyetrack(participantID : int):
         # Timestamp,AvgGazeX,AvgGazeY,LeftGazeX,LeftGazeY,RightGazeX,RightGazeY,LeftDiam,RightDiam
         row = [float(x) for x in row]
         timestamp = row[0]
-        gaze_x, gaze_y = align_gaze_to_stimulus(get_best(row[3], row[5]),
+        gaze_x, gaze_y = align_display_to_video(get_best(row[3], row[5]),
                                                 get_best(row[4], row[6]))
         diam = get_best(row[7], row[8])
         eyetrack.append([timestamp, gaze_x, gaze_y, diam])
@@ -47,7 +45,7 @@ def load_eyetrack(participantID : int):
 # For GazeX, GazeY, and Diam, we get separate left and right eye measurements.
 # Missing values are recoded from 0.0 to NaN. If one eye's data is missing,
 # take the other eye's data; else, take the average.
-def get_best(left, right):
+def get_best(left: float, right: float):
   if left < sys.float_info.epsilon:
     return float('nan')
   if left < sys.float_info.epsilon:
@@ -56,7 +54,7 @@ def get_best(left, right):
     return left
   return (left + right)/2
 
-def load_stimulus(participantID):
+def load_stimulus(participantID: int) -> List[experiment_frame.ExperimentFrame]:
   fname = experiment_data_dir + str(participantID).zfill(2) + '_stimulus.csv'
   with open(fname, 'r') as f:
     reader = csv.reader(f, delimiter=',')
@@ -69,22 +67,25 @@ def load_stimulus(participantID):
         # Stimulus CSV format is:
         # ComputerClock_Timestamp,Video_Index,Target_Name,TargetX,TargetY,TargetXRadius,TargetYRadius
         t, video_idx, target_name = float(row[0]), int(row[1]), row[2]
+        target_class_name = target_name.split('_')[0]
+        target_object_index = int(target_name.split('_')[1])
         if video_idx != current_video:
           video_frame = 0
           current_video = video_idx
-        targetX = float(row[3])
-        targetY = float(row[4]) + Y_CORRECTION
-        targetXRadius = float(row[5])
-        targetYRadius = float(row[6])
-        target = object_frame.ObjectFrame(t, video_idx, video_frame,
-                                          target_name, targetX, targetY,
-                                          targetXRadius, targetYRadius)
-        frames.append(experiment_frame.ExperimentFrame(target))
+        target_centroid = align_display_to_video(float(row[3]), float(row[4]))
+        target_size = (float(row[5]), float(row[6]))
+        target = object_frame.ObjectFrame(target_class_name,
+                                          target_object_index,
+                                          target_centroid,
+                                          target_size)
+        frames.append(experiment_frame.ExperimentFrame(video_idx, t,
+                                                       video_frame, target))
         video_frame += 1
       row_num += 1
   return frames
 
 def synchronize_eyetracking_with_stimulus(eyetrack, frames):
+  """Interpolates eyetracking frames to same timepoints as stimulus frames."""
   eyetrack_idx = 0
   if eyetrack[0, 0] >= frames[0].t:
     raise ValueError('Eye-tracking starts after stimulus.')
@@ -94,19 +95,27 @@ def synchronize_eyetracking_with_stimulus(eyetrack, frames):
     while eyetrack[eyetrack_idx, 0] < frame.t:
       eyetrack_idx += 1
     t0, t1 = eyetrack[(eyetrack_idx - 1):(eyetrack_idx + 1), 0]
-    # At this point, t0 <= frame.t < t1
-    # We linearly interpolate x and y based on the surrounding x0, x1, y0, and y1
+    # At this point, t0 <= frame.t < t1. Linearly interpolate x and y based on
+    # the surrounding x0, x1, y0, and y1.
     theta = (frame.t - t0)/(t1 - t0)
-    gazeX, gazeY, diam = (1 - theta) * eyetrack[eyetrack_idx - 1, 1:] + theta * eyetrack[eyetrack_idx, 1:]
-    frame.set_eyetrack(gazeX, gazeY, diam)
+    gaze_x, gaze_y, diam = ((1 - theta) * eyetrack[eyetrack_idx - 1, 1:]
+                          +   theta   * eyetrack[eyetrack_idx, 1:])
+    frame.set_eyetrack(gaze_x, gaze_y, diam)
 
-def load_participant(participantID):
+def load_participant(participantID: int) -> participant.Participant:
+
   eyetrack = load_eyetrack(participantID)
-  print('# of NaNs before interpolation: {}'.format(np.count_nonzero(np.isnan(eyetrack))))
+  print('# of NaNs before interpolation: {}'.format(np.count_nonzero(
+      np.isnan(eyetrack))))
   frames = load_stimulus(participantID)
   util.impute_missing_data_D(eyetrack, max_len = 10)
-  print('# of NaNs after  interpolation: {}\n'.format(np.count_nonzero(np.isnan(eyetrack))))
+  print('# of NaNs after  interpolation: {}\n'.format(np.count_nonzero(
+      np.isnan(eyetrack))))
   synchronize_eyetracking_with_stimulus(eyetrack, frames)
-  frames_by_video = [[f for f in frames if f.video_idx == video_idx] for video_idx in range(1, 15)]
 
-  return Participant(participantID, frames_by_video)
+  videos = []
+  for video_idx in VIDEOS:
+    videos.append(experiment_video.ExperimentVideo(
+        video_idx, [f for f in frames if f.video_idx == video_idx]))
+
+  return participant.Participant(participantID, videos)
