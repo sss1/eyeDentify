@@ -7,10 +7,7 @@ from scipy.spatial import distance as dist
 from collections import OrderedDict
 import numpy as np
 
-def calc_centroid(rect):
-  # Recall that, in Python 3, division is float by default
-  return ((rect[0] + rect[2])//2,
-          (rect[1] + rect[3])//2)
+import util
 
 class CentroidTracker():
 	def __init__(self, maxDisappeared=50):
@@ -67,7 +64,7 @@ class CentroidTracker():
 			# use the bounding box coordinates to derive the centroid
 			# cX = int((startX + endX) / 2.0)
 			# cY = int((startY + endY) / 2.0)
-			inputCentroids[i] = calc_centroid(rect)
+			inputCentroids[i] = util.calc_centroid(rect)
                         # (cX, cY)
 
 		# if we are currently not tracking any objects take the input
