@@ -19,8 +19,8 @@ class ExperimentFrame:
     self.target = target
     self.video_frame = video_frame
 
-  def set_eyetrack(self, gazeX, gazeY, diam):
-    self.gaze = (gazeX, gazeY)
+  def set_eyetrack(self, gaze_x, gaze_y, diam):
+    self.gaze = (gaze_x, gaze_y)
     self.diam = diam
 
   def set_detected_objects(self, detected_objects):
