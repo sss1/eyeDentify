@@ -63,10 +63,11 @@ def load_stimulus(participantID: int) -> List[experiment_frame.ExperimentFrame]:
     StimulusRow = collections.namedtuple('StimulusRow', next(reader))
     for row in map(StimulusRow._make, reader):
       video_idx = int(row.Video_Index)
-      [target_class_name, target_object_index] = row.Target_Name.split('_')
       if video_idx != current_video:
         video_frame = 0
         current_video = video_idx
+      [target_class_name, target_object_index] = row.Target_Name.split('_')
+      t = float(row.ComputerClock_Timestamp)
       target_centroid = align_display_to_video(float(row.TargetX),
                                                float(row.TargetY))
       target_size = (float(row.TargetXRadius), float(row.TargetYRadius))
@@ -74,10 +75,8 @@ def load_stimulus(participantID: int) -> List[experiment_frame.ExperimentFrame]:
                                         target_object_index,
                                         target_centroid,
                                         target_size)
-      frames.append(experiment_frame.ExperimentFrame(
-          video_idx,
-          float(row.ComputerClock_Timestamp),
-          video_frame, target))
+      frames.append(experiment_frame.ExperimentFrame(video_idx, t, video_frame,
+                                                     target))
       video_frame += 1
   return frames
 
