@@ -29,10 +29,17 @@ class ObjectFrame:
     return (self.class_name == other.class_name
             and self.object_index == other.object_index)
 
-  def emission_density(self, point):
-    """Returns the value of the object's emission density at a point."""
-    mu = np.array([self.x, self.y])
-    Sigma = (sigma**2) * np.array([[self.x_radius**2, 0],
-                                 [0, self.y_radius**2]])
+  def emission_density(self, point: Tuple[float, float], sigma: float):
+    """Returns the value of the object's emission density at a point.
+
+    Args:
+      point: Gaze point at which to compute the emission density
+      sigma: HMM emission distribution scaling factor
+
+    Returns:
+      Emission density
+    """
+    mu = np.array(self.centroid)
+    Sigma = (sigma * np.diagflat(self.size))**2
 
     return stats.multivariate_normal.logpdf(eyetrack, mean=mu, cov=Sigma)
