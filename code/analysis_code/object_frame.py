@@ -25,7 +25,9 @@ class ObjectFrame:
     self.centroid = centroid
     self.size = size
 
-  def is_same_object(self, other):
+  def __eq__(self, other):
+    """Two ObjectFrames are considered equal if they represent the same
+       detected object, even if at different points in time."""
     return (self.class_name == other.class_name
             and self.object_index == other.object_index)
 
