@@ -14,7 +14,7 @@ VIDEOS = range(1, 15)
 NUM_PARTICIPANTS = 1
 
 # Load participant data
-participants: List[participant.Participant] = [load_and_preprocess_data.load_participant(i) for i in range(NUM_PARTICIPANTS)]
+participants = [load_and_preprocess_data.load_participant(i) for i in range(NUM_PARTICIPANTS)]
 
 print('Loaded data from {} participants.'.format(NUM_PARTICIPANTS))
 
