@@ -29,7 +29,7 @@ class ObjectFrame:
     return (self.class_name == other.class_name
             and self.object_index == other.object_index)
 
-  def emission_density(self, point: Tuple[float, float], sigma: float):
+  def log_emission_density(self, point: Tuple[float, float], sigma: float):
     """Returns the value of the object's emission density at a point.
 
     Args:
