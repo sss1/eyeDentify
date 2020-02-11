@@ -1,3 +1,4 @@
+import collections
 import csv, sys
 import numpy as np
 
@@ -27,26 +28,24 @@ def load_eyetrack(participantID : int) -> np.ndarray:
   with open(fname, 'r') as f:
     reader = csv.reader(f, delimiter=',')
     eyetrack = []
-    row_num = 0
-    for row in reader:
-      if row_num > 0: # Skip 1 row of header
-        # Eyetracking CSV format is:
-        # Timestamp,AvgGazeX,AvgGazeY,LeftGazeX,LeftGazeY,RightGazeX,RightGazeY,LeftDiam,RightDiam
-        row = [float(x) for x in row]
-        timestamp = row[0]
-        gaze_x, gaze_y = align_display_to_video(get_best(row[3], row[5]),
-                                                get_best(row[4], row[6]))
-        diam = get_best(row[7], row[8])
-        eyetrack.append([timestamp, gaze_x, gaze_y, diam])
-      row_num += 1
-  print('Loading ' + str(row_num) + ' eyetracking frames from ' + fname + '.')
+    EyetrackRow = collections.namedtuple('EyetrackRow', next(reader))
+    for row in map(EyetrackRow._make, reader):
+      timestamp = float(row.ComputerClock_Timestamp)
+      gaze_x, gaze_y = align_display_to_video(
+          get_best(float(row.LeftEye_GazeX), float(row.RightEye_GazeX)),
+          get_best(float(row.LeftEye_GazeY), float(row.RightEye_GazeY)))
+      diam = get_best(float(row.LeftEye_Diam), float(row.RightEye_Diam))
+      eyetrack.append([timestamp, gaze_x, gaze_y, diam])
+  print('Loading {} rows of eyetracking data from {}.'.format(len(eyetrack),
+                                                              fname))
   return np.array(eyetrack)
 
-# For GazeX, GazeY, and Diam, we get separate left and right eye measurements.
-# Missing values are recoded from 0.0 to NaN. If one eye's data is missing,
-# take the other eye's data; else, take the average.
 def get_best(left: float, right: float):
-  if left < sys.float_info.epsilon:
+  """For gaze and diameter we get separate left and right eye measurements.
+     We recode missing values from 0.0 to NaN. If one eye's data is missing,
+     take the other eye's data; else, take the average.
+  """
+  if left < sys.float_info.epsilon and right < sys.float_info.epsilon:
     return float('nan')
   if left < sys.float_info.epsilon:
     return right
