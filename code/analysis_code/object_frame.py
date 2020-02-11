@@ -31,7 +31,7 @@ class ObjectFrame:
     return (self.class_name == other.class_name
             and self.object_index == other.object_index)
 
-  def log_emission_density(self, point: Tuple[float, float], sigma: float):
+  def log_emission_density(self, gaze: Tuple[float, float], sigma: float):
     """Returns the value of the object's emission density at a point.
 
     Args:
@@ -44,4 +44,4 @@ class ObjectFrame:
     mu = np.array(self.centroid)
     Sigma = (sigma * np.diagflat(self.size))**2
 
-    return stats.multivariate_normal.logpdf(eyetrack, mean=mu, cov=Sigma)
+    return stats.multivariate_normal.logpdf(gaze, mean=mu, cov=Sigma)
