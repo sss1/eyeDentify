@@ -17,9 +17,9 @@ Y_CORRECTION = -60
 def align_display_to_video(gaze_x: float, gaze_y: float) -> Tuple[float, float]:
   """Aligns coordinates of displayed video/gaze to the raw video coordinates.
   
-  Due to the top menu bar, the displayed video is 60 pixels lower than its
-  nominal coordinates. To align the experiment with nominal positions of objects
-  in the video, we subtract 60 from the experiment y-coordinates.
+  Due to the Windows top menu bar, the displayed video is 60 pixels lower than
+  its nominal coordinates. To align the experiment with nominal positions of
+  objects in the video, we subtract 60 from the experiment y-coordinates.
   """
   return gaze_x, gaze_y + Y_CORRECTION
 
@@ -58,29 +58,27 @@ def load_stimulus(participantID: int) -> List[experiment_frame.ExperimentFrame]:
   with open(fname, 'r') as f:
     reader = csv.reader(f, delimiter=',')
     frames = []
-    row_num = 0
     current_video = None
-    video_frame = 0
-    for row in reader:
-      if row_num > 1: # Skip 2 rows of header
-        # Stimulus CSV format is:
-        # ComputerClock_Timestamp,Video_Index,Target_Name,TargetX,TargetY,TargetXRadius,TargetYRadius
-        t, video_idx, target_name = float(row[0]), int(row[1]), row[2]
-        target_class_name = target_name.split('_')[0]
-        target_object_index = int(target_name.split('_')[1])
-        if video_idx != current_video:
-          video_frame = 0
-          current_video = video_idx
-        target_centroid = align_display_to_video(float(row[3]), float(row[4]))
-        target_size = (float(row[5]), float(row[6]))
-        target = object_frame.ObjectFrame(target_class_name,
-                                          target_object_index,
-                                          target_centroid,
-                                          target_size)
-        frames.append(experiment_frame.ExperimentFrame(video_idx, t,
-                                                       video_frame, target))
-        video_frame += 1
-      row_num += 1
+    next(reader) # Skip experiment metadata row
+    StimulusRow = collections.namedtuple('StimulusRow', next(reader))
+    for row in map(StimulusRow._make, reader):
+      video_idx = int(row.Video_Index)
+      [target_class_name, target_object_index] = row.Target_Name.split('_')
+      if video_idx != current_video:
+        video_frame = 0
+        current_video = video_idx
+      target_centroid = align_display_to_video(float(row.TargetX),
+                                               float(row.TargetY))
+      target_size = (float(row.TargetXRadius), float(row.TargetYRadius))
+      target = object_frame.ObjectFrame(target_class_name,
+                                        target_object_index,
+                                        target_centroid,
+                                        target_size)
+      frames.append(experiment_frame.ExperimentFrame(
+          video_idx,
+          float(row.ComputerClock_Timestamp),
+          video_frame, target))
+      video_frame += 1
   return frames
 
 def synchronize_eyetracking_with_stimulus(eyetrack, frames):
