@@ -34,7 +34,7 @@ class ObjectFrame:
 
     Args:
       point: Gaze point at which to compute the emission density
-      sigma: HMM emission distribution scaling factor
+      sigma: Scaling factor of HMM emission distribution
 
     Returns:
       Emission density

@@ -1,38 +1,52 @@
-"""This module fits an HMM to a sequence of eye-tracking and stimulus data.
+"""This module implements the HMM class, which fits an HMM to a data sequence.
 """
 
 import numpy
 
-def fit_HMM(eyetrack_seq : list[tuple[float, float]],
-        stimulus_seq,
-        sigma : float,
-        stay_prob : float):
-""" Use MLE to fit HMM hidden state sequence to observed eyetrack/stimulus data
+from typing import Dict, List
 
-Inputs:
-    eyetrack_seq: N-by-2 array of floats, encoding eyetracking coordinates in
-      each frame
-    stimulus_seq: List of stimulus frames. Each frame contains a list of objects
-      present in that frame.
-    sigma: Spatial scaling factor of emission distribution. The standard
-      deviations of the x- and y-marginals of Gaussian around an object is
-      sigma times the respective dimension of the object
-    stay_prob: Probability of staying on the same object between two consecutive
-      frames; on a frame with K objects, each switch probability is:
-                (1 - stay_prob)/K
-"""
+import experiment_frame
+import object_frame
 
-  N = eyetrack.shape[0] # number of frames
-  state_seq = np.zeros(N, dtype=int)
-  # For each object in each frame, record maximum log-likelihood of ending on
-  # that frame, based on data from previous frames, as well as the preceding
-  # object that maximizes that likelihood
-  likelihood_seq = []
-  predecessor_seq = []
+class HMM:
+  """An hidden Markov model of a single data sequence.
+  
+  Example usage:
+    hmm = HMM(sigma, tau)
+    for experiment_frame, objects_in_frame in zip(experiment_frames, detected_objects):
+      hmm.update(experiment_frame, objects_in_frame)
+    mle = hmm.backwards()
 
-  # TODO: Initialize likelihood_seq
+  Hidden Attributes:
+    likelihood_table: mapping from each object to its partial maximum likelihood
+      and most likely predecessor
+  """
 
-  for (eyetrack_frame, stim_frame) in zip(eyetrack_seq, stimulus_seq):
-    marginal_likelihoods = {obj : frame_likelihood(eyetrack_frame, obj, sigma)
-            for obj in stim_frame}
-    # TODO: iterate through objects from previous frame and compute
+  def __init__(self, sigma: float, tau: float):
+    """
+    Args:
+      tau: Nominal probability that the participant stays on the same object
+        between two consecutive frames.
+      sigma: Scaling factor of HMM emission distribution
+    """
+    self.sigma = sigma
+    self.tau = tau
+    self.likelihood_table : Dict[object_frame.ObjectFrame,
+                                 (float, object_frame.ObjectFrame)] = {}
+
+  def forwards_update(experiment_frame: experiment_frame.ExperimentFrame,
+                      objects_in_frame: List[object_frame.ObjectFrame]):
+    """Performs an update step of the forwards algorithm based on input data.
+    Args:
+      experiment_frame: a single frame of participant data
+      objects_in_frame: list of objects detected in frame
+    """
+    raise NotImplemented()
+
+  def backwards() -> List[object_frame.ObjectFrame]:
+    """Runs the backwards algorithm to compute the object sequence MLE.
+
+    Returns:
+      Maximum likelihood object sequence
+    """
+    raise NotImplemented()
