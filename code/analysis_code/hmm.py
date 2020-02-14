@@ -1,6 +1,7 @@
 """This module implements the HMM class, which fits an HMM to a data sequence.
 """
 
+from collections import namedtuple
 import numpy
 import math
 from typing import Dict, List, NewType, Tuple
@@ -8,9 +9,10 @@ from typing import Dict, List, NewType, Tuple
 import experiment_frame
 import object_frame
 
-FrameTable = NewType('FrameTable',
-                     Dict[object_frame.ObjectFrame,
-                          Tuple[float, object_frame.ObjectFrame]])
+# A single cell in the dynamic programming table
+Cell = namedtuple('Cell', ['partial_max_log_likelihood', 'predecessor'])
+
+FrameTable = NewType('FrameTable', Dict[object_frame.ObjectFrame, Cell])
 
 class HMM:
   """An hidden Markov model of a single data sequence.
@@ -22,7 +24,7 @@ class HMM:
     mle = hmm.backwards()
 
   Hidden Attributes:
-    likelihood_table: (List[FrameTable]) for each frame, a dict mapping each
+    log_likelihood_table: (List[FrameTable]) for each frame, a dict mapping each
       object to its partial maximum log-likelihood and most likely predecessor
   """
 
@@ -35,7 +37,7 @@ class HMM:
     """
     self.sigma = sigma
     self.tau = tau
-    self.likelihood_table = []
+    self.log_likelihood_table = []
 
   def forwards_update(self, gaze: Tuple[float, float],
                       objects_in_frame: List[object_frame.ObjectFrame]):
@@ -46,29 +48,37 @@ class HMM:
       objects_in_frame: list of objects detected in frame
     """
 
-    if not self.likelihood_table:
+    if not self.log_likelihood_table:
       # This is the first frame; only use emission probabilities
-      new_frame_table = {obj : (obj.log_emission_density(gaze, self.sigma), None)
-                         for obj in objects_in_frame}
+      new_frame_table = {}
+      for obj in objects_in_frame:
+        new_frame_table[obj] = Cell(obj.log_emission_density(gaze, self.sigma),
+                                    None)
     else:
-      new_frame_table = _compute_next_frame_table(self.likelihood_table[-1],
-                                                  gaze, objects_in_frame)
-    self.likelihood_table.append(new_frame_table)
+      new_frame_table = self._compute_next_frame_table(
+          self.log_likelihood_table[-1], gaze, objects_in_frame)
+    self.log_likelihood_table.append(new_frame_table)
 
-
-  def _compute_next_frame_table(prev_frame_table: FrameTable,
-                                gaze: Tuple[float, float],
-                                objects_in_frame: List[object_frame.ObjectFrame]):
+  def _compute_next_frame_table(
+          self, prev_frame_table: FrameTable, gaze: Tuple[float, float],
+          objects_in_frame: List[object_frame.ObjectFrame]):
     """Computes a frame_table using a previous frame table.
+
+    Args:
+      prev_frame_table: log-likelihood table from previous frame
+      gaze: (x, y) coordinates of gaze
 
     NOTE: Depending on sigma and tau, this implementation may bias transitions
     to frames where the tracked object disappears.
     """
     num_new_objects = len(objects_in_frame)
-    new_frame_table = {obj : (float('-inf'), None) for obj in objects_in_frame}
+    new_frame_table = {obj : Cell(float('-inf'), None)
+                       for obj in objects_in_frame}
 
-    for prev_obj, (prev_obj_partial_log_likelihood, _) in prev_frame_table:
+    for prev_obj in prev_frame_table:
 
+      prev_obj_partial_log_likelihood = \
+              prev_frame_table[prev_obj].partial_max_log_likelihood
       prev_obj_in_new_frame = (prev_obj in objects_in_frame)
 
       for new_obj in objects_in_frame:
@@ -84,8 +94,9 @@ class HMM:
             prev_obj_partial_log_likelihood
             + math.log(transition_probability)
             + new_obj.log_emission_density(gaze, self.sigma))
-        if new_partial_log_likelihood > new_frame_table[new_obj][0]:
-          new_frame_table[new_obj] = (new_partial_log_likelihood, prev_obj)
+        if (new_partial_log_likelihood
+            > new_frame_table[new_obj].partial_max_log_likelihood):
+          new_frame_table[new_obj] = Cell(new_partial_log_likelihood, prev_obj)
     return new_frame_table
 
   def backwards(self) -> List[object_frame.ObjectFrame]:
