@@ -1,6 +1,7 @@
 """This module specifies the ObjectFrame class."""
 
-import scipy.stats
+import numpy as np
+import scipy.stats as stats
 
 from typing import Tuple
 
@@ -30,6 +31,9 @@ class ObjectFrame:
        detected object, even if at different points in time."""
     return (self.class_name == other.class_name
             and self.object_index == other.object_index)
+
+  def __hash__(self):
+    return hash((self.class_name, self.object_index))
 
   def log_emission_density(self, gaze: Tuple[float, float], sigma: float):
     """Returns the value of the object's emission density at a point.
