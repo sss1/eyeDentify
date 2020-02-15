@@ -1,4 +1,5 @@
 # This module performs the analyses for Experiment 1: Guided Viewing with Detected Targets
+import numpy as np
 import pickle, sys
 
 import hmm
@@ -32,8 +33,11 @@ for participant in participants:
     print('Initializing HMM...')
     trial_hmm = hmm.HMM(SIGMA, TAU)
     print('Running HMM forwards pass...')
-    for (frame_idx, (experiment_frame_data, detected_objects_in_frame)) in enumerate(zip(experiment_video_data.frames, video_objects)):
+    for (experiment_frame_data, detected_objects_in_frame) in zip(experiment_video_data.frames, video_objects):
       trial_hmm.forwards_update(experiment_frame_data.gaze,
                           detected_objects_in_frame)
     print('Running HMM backwards pass...')
-    # TODO: run trial_hmm.backwards() to retrieve MLE, and compare with target
+    mle = trial_hmm.backwards()
+    ground_truth = [frame.target for frame in experiment_video_data.frames]
+    print(np.mean([frame_target == frame_mle
+                   for (frame_target, frame_mle) in zip(ground_truth, mle)]))
