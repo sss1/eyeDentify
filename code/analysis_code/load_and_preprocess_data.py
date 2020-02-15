@@ -56,21 +56,25 @@ def get_best(left: float, right: float):
 def load_stimulus(participantID: int) -> List[experiment_frame.ExperimentFrame]:
   fname = experiment_data_dir + str(participantID).zfill(2) + '_stimulus.csv'
   with open(fname, 'r') as f:
-    reader = csv.reader(f, delimiter=',')
+
     frames = []
     current_video = None
+
+    reader = csv.reader(f, delimiter=',')
     next(reader) # Skip experiment metadata row
     StimulusRow = collections.namedtuple('StimulusRow', next(reader))
+
     for row in map(StimulusRow._make, reader):
       video_idx = int(row.Video_Index)
       if video_idx != current_video:
         video_frame = 0
         current_video = video_idx
-      [target_class_name, target_object_index] = row.Target_Name.split('_')
+      target_class_name = row.Target_Name.split('_')[0]
+      target_object_index = int(row.Target_Name.split('_')[1])
       t = float(row.ComputerClock_Timestamp)
-      target_centroid = align_display_to_video(float(row.TargetX),
-                                               float(row.TargetY))
-      target_size = (float(row.TargetXRadius), float(row.TargetYRadius))
+      target_centroid = align_display_to_video(int(row.TargetX),
+                                               int(row.TargetY))
+      target_size = (int(row.TargetXRadius), int(row.TargetYRadius))
       target = object_frame.ObjectFrame(target_class_name,
                                         target_object_index,
                                         target_centroid,
