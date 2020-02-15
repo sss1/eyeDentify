@@ -105,4 +105,11 @@ class HMM:
     Returns:
       Maximum likelihood object sequence
     """
-    raise NotImplemented()
+
+    mle_backwards = []
+
+    successor = None
+    for frame_table in self.log_likelihood_table[::-1]:
+      if successor is None:
+
+    return mle_backwards[::-1]
