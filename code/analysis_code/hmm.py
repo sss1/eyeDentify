@@ -108,8 +108,13 @@ class HMM:
 
     mle_backwards = []
 
-    successor = None
+    # Get most likely final state
+    frame_table = self.log_likelihood_table[-1]
+    current = max(frame_table,
+                  key=lambda obj: frame_table[obj].partial_max_log_likelihood)
+
     for frame_table in self.log_likelihood_table[::-1]:
-      if successor is None:
+      mle_backwards.append(current)
+      current = frame_table[current].predecessor
 
     return mle_backwards[::-1]
