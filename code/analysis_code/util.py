@@ -71,7 +71,7 @@ def smooth_objects(all_frames) -> List[List[object_frame.ObjectFrame]]:
             obj_centroid = calc_centroid(obj['box_points'])
             size = calc_size(obj['box_points'])
             if max(abs(obj_centroid[0] - centroid[0]), abs(obj_centroid[1] - centroid[1])) < sys.float_info.epsilon:
-              new_frame_list.append(object_frame.ObjectFrame(obj_type, ID, centroid, size))
+              new_frame_list.append(object_frame.ObjectFrame(obj_type, ID, obj_centroid, size))
 
     tracker_list.append(new_frame_list)
 
