@@ -35,6 +35,12 @@ class ObjectFrame:
   def __hash__(self):
     return hash((self.class_name, self.object_index))
 
+  def __str__(self):
+    return 'Object "{} {}" at position {}, size {}.'.format(self.class_name,
+                                                            self.object_index,
+                                                            self.centroid,
+                                                            self.size)
+
   def log_emission_density(self, gaze: Tuple[float, float], sigma: float):
     """Returns the value of the object's emission density at a point.
 
