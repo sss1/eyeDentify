@@ -14,6 +14,9 @@ Cell = namedtuple('Cell', ['partial_max_log_likelihood', 'predecessor'])
 
 FrameTable = NewType('FrameTable', Dict[object_frame.ObjectFrame, Cell])
 
+def max_likelihood_key(frame_table: FrameTable):
+    return lambda obj: frame_table[obj].partial_max_log_likelihood
+
 class HMM:
   """An hidden Markov model of a single data sequence.
   
@@ -110,11 +113,17 @@ class HMM:
 
     # Get most likely final state
     frame_table = self.log_likelihood_table[-1]
-    current = max(frame_table,
-                  key=lambda obj: frame_table[obj].partial_max_log_likelihood)
+    current = max(frame_table, key=max_likelihood_key(frame_table))
 
+    restart = False
     for frame_table in self.log_likelihood_table[::-1]:
       mle_backwards.append(current)
-      current = frame_table[current].predecessor
+      if restart:
+        current = max(frame_table, key=max_likelihood_key(frame_table))
+      else:
+        current = frame_table[current].predecessor
+
+      if current is None:
+        restart = True
 
     return mle_backwards[::-1]
