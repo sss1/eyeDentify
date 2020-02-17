@@ -89,6 +89,7 @@ class _HMM:
         if prev_obj_in_new_frame and prev_obj == new_obj:
           transition_probability = self.tau
         elif prev_obj_in_new_frame:
+          # This case only occurs if there is >1 object, so we don't divide by 0
           transition_probability = (1 - self.tau)/(num_new_objects - 1)
         else:
           transition_probability = 1/num_new_objects
@@ -97,6 +98,7 @@ class _HMM:
             prev_obj_partial_log_likelihood
             + math.log(transition_probability)
             + new_obj.log_emission_density(gaze, self.sigma))
+
         if (new_partial_log_likelihood
             > new_frame_table[new_obj].partial_max_log_likelihood):
           new_frame_table[new_obj] = Cell(new_partial_log_likelihood, prev_obj)

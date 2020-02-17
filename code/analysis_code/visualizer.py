@@ -57,7 +57,8 @@ def play_experiment_video(participant_idx, video_idx):
         gaze = tuple(int(x) for x in experiment_data.frames[current_frame].gaze)
         image = cv2.circle(frame, center=gaze, radius=10, color=(255, 255, 255),
                            thickness = 3)
-      except ValueError: # Skip eye-tracking when data is missing
+      except ValueError:
+        # Skip eye-tracking when data is missing
         pass
 
       # Plot all detected objects
@@ -82,8 +83,6 @@ def play_experiment_video(participant_idx, video_idx):
       cv2.waitKey(1)
       nextFrameExists, frame = video.read() # Load next video frame
       current_frame += 1
-      # TODO: 1) Display object bounding boxes in green
-      # 2) Display estimated object in blue
 
   video.release()
   cv2.destroyAllWindows()

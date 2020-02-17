@@ -50,9 +50,10 @@ class ObjectFrame:
       sigma: Scaling factor of HMM emission distribution
 
     Returns:
-      Emission density
+      Emission density at gaze point; returns 0 if gaze is missing
     """
     mu = np.array(self.centroid)
     Sigma = (sigma * np.diagflat(self.size))**2
 
-    return stats.multivariate_normal.logpdf(gaze, mean=mu, cov=Sigma)
+    return np.nan_to_num(
+        stats.multivariate_normal.logpdf(gaze, mean=mu, cov=Sigma))
