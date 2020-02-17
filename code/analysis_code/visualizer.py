@@ -1,13 +1,24 @@
 import cv2
 import math
+import numpy as np
 import pickle
 import time
 
+import hmm
 import load_and_preprocess_data
+import object_frame
 import util
 
+SIGMA = 1
+TAU = 0.9
 VIDEO_DIR = '../../data/MOT17_videos/'
 DETECTED_OBJECTS_DIR = '../../data/detected_objects/'
+
+def _plot_object(frame: np.ndarray, obj: object_frame.ObjectFrame, color):
+  if obj is not None:
+    cv2.ellipse(frame, center=obj.centroid, axes=obj.size, angle=0,
+                startAngle=0, endAngle=360, color=color, thickness = 2)
+  
 
 def play_experiment_video(participant_idx, video_idx):
 
@@ -24,6 +35,9 @@ def play_experiment_video(participant_idx, video_idx):
                      .load_participant(participant_idx)
                      .videos[video_idx-1])
 
+  hmm_mle = hmm.forwards_backwards(SIGMA, TAU, experiment_data,
+                                   detected_objects)
+
   # Set the inter-frame delay based on the video's natural framerate
   FPS = video.get(cv2.CAP_PROP_FPS) # natural frame rate
   print('Video framerate:' + str(FPS))
@@ -32,27 +46,39 @@ def play_experiment_video(participant_idx, video_idx):
   current_frame = 0
   videoStartTime = time.time()
   nextFrameExists, frame = video.read() # Load first video frame
+
+  hmm_correct = np.zeros((len(hmm_mle),), dtype=bool)
   
   while nextFrameExists and current_frame < len(experiment_data.frames):
     if time.time() > videoStartTime + current_frame * delay:
 
-      experiment_frame = experiment_data.frames[current_frame] 
       # Plot gaze
       try:
-        gaze = tuple(int(x) for x in experiment_frame.gaze)
+        gaze = tuple(int(x) for x in experiment_data.frames[current_frame].gaze)
         image = cv2.circle(frame, center=gaze, radius=10, color=(255, 255, 255),
                            thickness = 3)
       except ValueError: # Skip eye-tracking when data is missing
         pass
 
-      # Plot target object
-      target_centroid = experiment_frame.target.centroid
-      target_size = experiment_frame.target.size
-      cv2.ellipse(frame, center=target_centroid,
-                  axes=(target_size[0], target_size[1]), angle=0, startAngle=0,
-                  endAngle=360, color = (0, 255, 0), thickness = 2)
-      cv2.imshow('Video Frame', frame) # Display current frame
+      # Plot all detected objects
+      objects_in_frame = detected_objects[current_frame]
+      for obj in objects_in_frame:
+        _plot_object(frame, obj, color=(255, 0, 0))
 
+      # Plot true target and HMM estimate
+      target = experiment_data.frames[current_frame].target
+      hmm_estimate = hmm_mle[current_frame]
+      if target != hmm_estimate:
+        # Plot target object in red
+        _plot_object(frame, target, color=(0, 0, 255))
+        # Plot estimated object in green
+        _plot_object(frame, hmm_estimate, color=(0, 255, 0))
+      else:
+        # Plot estimated object in white
+        _plot_object(frame, hmm_estimate, color=(255, 255, 255))
+        hmm_correct[current_frame] = True
+
+      cv2.imshow('Video Frame', frame) # Display current frame
       cv2.waitKey(1)
       nextFrameExists, frame = video.read() # Load next video frame
       current_frame += 1
@@ -62,6 +88,8 @@ def play_experiment_video(participant_idx, video_idx):
   video.release()
   cv2.destroyAllWindows()
 
+  print('HMM accuracy: {}'.format(hmm_correct.mean()))
+
 
 if __name__ == '__main__':
-  play_experiment_video(0, 1)
+  play_experiment_video(0, 3)
