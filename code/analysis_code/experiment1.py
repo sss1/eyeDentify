@@ -1,6 +1,6 @@
 # This module performs the analyses for Experiment 1: Guided Viewing with Detected Targets
 import numpy as np
-import pickle, sys
+import pickle
 
 import hmm
 import load_and_preprocess_data
