@@ -29,15 +29,8 @@ for video_idx in VIDEOS:
   detected_objects.append(util.smooth_objects(all_frames))
 
 for participant in participants:
-  for (experiment_video_data, video_objects) in zip(participant.videos, detected_objects):
-    print('Initializing HMM...')
-    trial_hmm = hmm.HMM(SIGMA, TAU)
-    print('Running HMM forwards pass...')
-    for (experiment_frame_data, detected_objects_in_frame) in zip(experiment_video_data.frames, video_objects):
-      trial_hmm.forwards_update(experiment_frame_data.gaze,
-                          detected_objects_in_frame)
-    print('Running HMM backwards pass...')
-    mle = trial_hmm.backwards()
-    ground_truth = [frame.target for frame in experiment_video_data.frames]
+  for (experiment_video, video_objects) in zip(participant.videos, detected_objects):
+    mle = hmm.forwards_backwards(SIGMA, TAU, experiment_video, video_objects)
+    ground_truth = [frame.target for frame in experiment_video.frames]
     print(np.mean([frame_target == frame_mle
                    for (frame_target, frame_mle) in zip(ground_truth, mle)]))

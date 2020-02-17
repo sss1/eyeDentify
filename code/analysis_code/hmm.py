@@ -17,7 +17,7 @@ FrameTable = NewType('FrameTable', Dict[object_frame.ObjectFrame, Cell])
 def max_likelihood_key(frame_table: FrameTable):
     return lambda obj: frame_table[obj].partial_max_log_likelihood
 
-class HMM:
+class _HMM:
   """An hidden Markov model of a single data sequence.
   
   Example usage:
@@ -127,3 +127,11 @@ class HMM:
         restart = True
 
     return mle_backwards[::-1]
+
+def forwards_backwards(sigma, tau, experiment_video, video_objects):
+    trial_hmm = _HMM(sigma, tau)
+    for (experiment_frame_data, detected_objects_in_frame) \
+        in zip(experiment_video.frames, video_objects):
+      trial_hmm.forwards_update(experiment_frame_data.gaze,
+                          detected_objects_in_frame)
+    return trial_hmm.backwards()
