@@ -115,13 +115,15 @@ class _HMM:
 
     # Get most likely final state
     frame_table = self.log_likelihood_table[-1]
-    current = max(frame_table, key=max_likelihood_key(frame_table))
+    current = max(frame_table, key=max_likelihood_key(frame_table),
+                  default=None)
 
     restart = False
     for frame_table in self.log_likelihood_table[::-1]:
       mle_backwards.append(current)
       if restart:
-        current = max(frame_table, key=max_likelihood_key(frame_table))
+        current = max(frame_table, key=max_likelihood_key(frame_table),
+                      default=None)
       else:
         current = frame_table[current].predecessor
 
