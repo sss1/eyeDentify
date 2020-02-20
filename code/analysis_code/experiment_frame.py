@@ -1,5 +1,7 @@
 """This module specifies the ExperimentFrame class."""
 
+import math
+
 import object_frame
 
 class ExperimentFrame:
@@ -21,6 +23,7 @@ class ExperimentFrame:
 
   def set_eyetrack(self, gaze_x, gaze_y, diam):
     self.gaze = (gaze_x, gaze_y)
+    self.gaze_is_missing = math.isnan(gaze_x) or math.isnan(gaze_y)
     self.diam = diam
 
   def set_detected_objects(self, detected_objects):
