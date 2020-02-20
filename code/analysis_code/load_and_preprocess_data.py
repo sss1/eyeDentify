@@ -72,6 +72,9 @@ def load_stimulus(participantID: int) -> List[experiment_frame.ExperimentFrame]:
       target_class_name = row.Target_Name.split('_')[0]
       target_object_index = int(row.Target_Name.split('_')[1])
       t = float(row.ComputerClock_Timestamp)
+      if t < 1e12:
+        # Due to a bug, some stimulus were recorded in seconds rather than ms
+        t *= 1000
       target_centroid = align_display_to_video(int(row.TargetX),
                                                int(row.TargetY))
       target_size = (int(row.TargetXRadius), int(row.TargetYRadius))
@@ -88,9 +91,13 @@ def synchronize_eyetracking_with_stimulus(eyetrack, frames):
   """Interpolates eyetracking frames to same timepoints as stimulus frames."""
   eyetrack_idx = 0
   if eyetrack[0, 0] >= frames[0].t:
-    raise ValueError('Eye-tracking starts after stimulus.')
+    error = (eyetrack[0, 0] - frames[0].t)/1000
+    print('EYE-TRACKING STARTS {} SECONDS AFTER STIMULUS.'.format(error))
+    eyetrack[0] = np.array([frames[0].t - 1, float('nan'), float('nan'), float('nan')])
   if eyetrack[-1, 0] <= frames[-1].t:
-    raise ValueError('Eye-tracking ends before stimulus.')
+    error = (frames[-1].t - eyetrack[-1, 0])/1000
+    print('EYE-TRACKING ENDS {} SECONDS BEFORE STIMULUS.'.format(error))
+    eyetrack[-1] = np.array([frames[-1].t + 1, float('nan'), float('nan'), float('nan')])
   for frame in frames:
     while eyetrack[eyetrack_idx, 0] < frame.t:
       eyetrack_idx += 1
