@@ -55,10 +55,11 @@ def play_experiment_video(participant_idx, video_idx):
       # Plot gaze
       try:
         gaze = tuple(int(x) for x in experiment_data.frames[current_frame].gaze)
-        image = cv2.circle(frame, center=gaze, radius=10, color=(255, 255, 255),
-                           thickness = 3)
+        cv2.circle(frame, center=gaze, radius=10, color=(255, 255, 255),
+                   thickness = 3)
       except ValueError:
-        # Skip eye-tracking when data is missing
+        # When eye-tracking is missing, plot a red square in the top-left corner
+        cv2.rectangle(frame, (0, 0), (20, 20), (0, 0, 255), 20)
         pass
 
       # Plot all detected objects
@@ -91,4 +92,4 @@ def play_experiment_video(participant_idx, video_idx):
 
 
 if __name__ == '__main__':
-  play_experiment_video(0, 3)
+  play_experiment_video(0, 1)
