@@ -12,16 +12,6 @@ import participant
 
 experiment_data_dir = '../../data/experiment1/'
 VIDEOS = range(1, 15)
-Y_CORRECTION = -60
-
-def align_display_to_video(gaze_x: float, gaze_y: float) -> Tuple[float, float]:
-  """Aligns coordinates of displayed video/gaze to the raw video coordinates.
-  
-  Due to the Windows top menu bar, the displayed video is 60 pixels lower than
-  its nominal coordinates. To align the experiment with nominal positions of
-  objects in the video, we subtract 60 from the experiment y-coordinates.
-  """
-  return gaze_x, gaze_y + Y_CORRECTION
 
 def load_eyetrack(participantID : int) -> np.ndarray:
   fname = experiment_data_dir + str(participantID).zfill(2) + '_eyetracking.csv'
@@ -31,9 +21,8 @@ def load_eyetrack(participantID : int) -> np.ndarray:
     EyetrackRow = collections.namedtuple('EyetrackRow', next(reader))
     for row in map(EyetrackRow._make, reader):
       timestamp = float(row.ComputerClock_Timestamp)
-      gaze_x, gaze_y = align_display_to_video(
-          get_best(float(row.LeftEye_GazeX), float(row.RightEye_GazeX)),
-          get_best(float(row.LeftEye_GazeY), float(row.RightEye_GazeY)))
+      gaze_x = get_best(float(row.LeftEye_GazeX), float(row.RightEye_GazeX))
+      gaze_y = get_best(float(row.LeftEye_GazeY), float(row.RightEye_GazeY))
       diam = get_best(float(row.LeftEye_Diam), float(row.RightEye_Diam))
       eyetrack.append([timestamp, gaze_x, gaze_y, diam])
   print('Loading {} rows of eyetracking data from {}.'.format(len(eyetrack),
@@ -75,8 +64,7 @@ def load_stimulus(participantID: int) -> List[experiment_frame.ExperimentFrame]:
       if t < 1e12:
         # Due to a bug, some stimulus were recorded in seconds rather than ms
         t *= 1000
-      target_centroid = align_display_to_video(int(row.TargetX),
-                                               int(row.TargetY))
+      target_centroid = (int(row.TargetX), int(row.TargetY))
       target_size = (int(row.TargetXRadius), int(row.TargetYRadius))
       target = object_frame.ObjectFrame(target_class_name,
                                         target_object_index,

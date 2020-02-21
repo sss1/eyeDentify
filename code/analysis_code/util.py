@@ -2,27 +2,32 @@ import numpy as np
 import math
 import sys
 
-from typing import List
+from typing import List, Tuple
 
 import centroidtracker
 import object_frame
 
-# Given a sequence X of D-dimensional vectors, performs __impute_missing_data (independently) on each dimension of X
-# X is N X D, where D is the dimensionality and N is the sample length
+
 def impute_missing_data_D(X, max_len = 10):
+  """Given a sequence X of D-dimensional vectors, performs __impute_missing_data
+  (independently) on each dimension of X.
+
+  X is N X D, where D is the dimensionality and N is the sample length
+  """
   D = X.shape[1]
   for d in range(D):
     X[:, d] = __impute_missing_data(X[:, d], max_len)
   return X
 
-# Given a sequence X of floats, replaces short streches (up to length max_len) of NaNs with linear interpolation
-# For example, if
-# X = np.array([1, NaN, NaN,  4, NaN,  6])
-# then
-# impute_missing_data(X, max_len = 1) == np.array([1, NaN, NaN, 4, 5, 6])
-# and
-# impute_missing_data(X, max_len = 2) == np.array([1, 2, 3, 4, 5, 6])
 def __impute_missing_data(X, max_len):
+  """Given a sequence X of floats, replaces short streches (up to length
+  max_len) of NaNs with linear interpolation. For example, if
+    X = np.array([1, NaN, NaN,  4, NaN,  6])
+  then
+    impute_missing_data(X, max_len = 1) == np.array([1, NaN, NaN, 4, 5, 6])
+  and
+    impute_missing_data(X, max_len = 2) == np.array([1, 2, 3, 4, 5, 6]).
+  """
   last_valid_idx = -1
   for n in range(len(X)):
     if not math.isnan(X[n]):
@@ -47,9 +52,6 @@ def smooth_objects(all_frames) -> List[List[object_frame.ObjectFrame]]:
   # Since we assume that objects cannot change types, we separately run the
   # object tracking algorithm for each object type
   obj_classes = [obj['name'] for frame in all_frames for obj in frame]
-  # print('Unique object types: ' + str(set(obj_classes)))
-  # obj_class_counts = [(name, obj_classes.count(name)) for name in set(obj_classes)]
-  # print('Object class counts: ' + str(obj_class_counts))
 
   # Initialize a centroid tracker for each object type
   trackers = {obj_type : centroidtracker.CentroidTracker(maxDisappeared = 15)
@@ -77,6 +79,7 @@ def smooth_objects(all_frames) -> List[List[object_frame.ObjectFrame]]:
 
   return tracker_list
 
+
 def calc_centroid(rect):
   # Recall that, in Python 3, division is float by default
   return ((rect[0] + rect[2])//2,
@@ -85,6 +88,7 @@ def calc_centroid(rect):
 def calc_size(rect):
   return ((max(rect[0], rect[2]) - min(rect[0], rect[2]))//2,
           (max(rect[1], rect[3]) - min(rect[1], rect[3]))//2)
+
 
 def _interpolate_missing_frames(target_list):
   prev_good_frame = 0
@@ -115,3 +119,56 @@ def _interpolate_missing_frames(target_list):
       prev_good_frame = frame_idx
 
   return target_list
+
+# Original pixel dimensions (height, width) of each MOT video.
+VIDEO_SIZES = [(1080, 1920),
+               (1080, 1920),
+               (1080, 1920),
+               (1080, 1920),
+               (480, 640),
+               (480, 640),
+               (1080, 1920),
+               (1080, 1920),
+               (1080, 1920),
+               (1080, 1920),
+               (1080, 1920),
+               (1080, 1920),
+               (1080, 1920),
+               (1080, 1920)]
+SCREEN_SIZE = (1200, 1920) # Resolution of stimulus display
+
+def align_objects_to_screen(
+    video_idx: int,
+    detected_objects: List[List[object_frame.ObjectFrame]]):
+  """Rescale objects from the original video size to the stimulus screen size.
+
+  During data collection, the video was rescaled to be as large as possible
+  while fitting on screen (without changing aspect ratio). The video was then
+  centered on the screen and the remaining screen space was padded with black
+  borders.
+
+  This function rescales the positions and sizes of detected objects to match
+  those in the rescaled video.
+
+  Args:
+    video_idx: index (between 1-14, inclusive) of the stimulus video
+    detected_objects: list of objects detected in each frame of video
+  """
+
+  screen_height, screen_width = SCREEN_SIZE
+  video_height, video_width = VIDEO_SIZES[video_idx - 1]
+
+  scale_factor = min(screen_height/video_height, screen_width/video_width)
+
+  # Pad the remaining screen space with black space
+  scaled_width = int(scale_factor * video_width)
+  scaled_height = int(scale_factor * video_height)
+  top_padding = max(0, int((screen_height - scaled_height)/2))
+  left_padding = max(0, int((screen_width - scaled_width)/2))
+
+  for frame in detected_objects:
+    for obj in frame:
+      obj.centroid = (int(scale_factor * obj.centroid[0]) + left_padding,
+                      int(scale_factor * obj.centroid[1]) + top_padding)
+      obj.size = (int(scale_factor * obj.size[0]),
+                  int(scale_factor * obj.size[1]))

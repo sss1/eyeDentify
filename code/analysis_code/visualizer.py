@@ -14,6 +14,29 @@ TAU = 0.9
 VIDEO_DIR = '../../data/MOT17_videos/'
 DETECTED_OBJECTS_DIR = '../../data/detected_objects/'
 
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1200
+
+# Allow participant 18 frames (300ms) to find new target after switch
+GRACE_PERIOD = 18
+
+def _rescale_video_to_screen(frame: np.ndarray):
+  """Rescale video to fit the screen on which the experiment was displayed."""
+  video_height, video_width, _ = frame.shape
+  scale = min(SCREEN_HEIGHT/video_height, SCREEN_WIDTH/video_width)
+  scaled_width = int(scale * video_width)
+  scaled_height = int(scale * video_height)
+  frame = cv2.resize(frame, (scaled_width, scaled_height))
+
+  # Pad the remaining screen space with black space
+  top_padding = max(0, int((SCREEN_HEIGHT - scaled_height)/2))
+  left_padding = max(0, int((SCREEN_WIDTH - scaled_width)/2))
+  return cv2.copyMakeBorder(frame, top_padding,
+                            SCREEN_HEIGHT - (scaled_height + top_padding),
+                            left_padding,
+                            SCREEN_WIDTH - (scaled_width + left_padding),
+                            borderType=cv2.BORDER_CONSTANT, value=(0, 0, 0))
+
 def _plot_object(frame: np.ndarray, obj: object_frame.ObjectFrame, color):
   if obj is not None:
     cv2.ellipse(frame, center=obj.centroid, axes=obj.size, angle=0,
@@ -30,6 +53,7 @@ def play_experiment_video(participant_idx, video_idx):
   detected_objects_fname = DETECTED_OBJECTS_DIR + video_idx_str + '.pickle'
   with open(detected_objects_fname, 'rb') as in_file:
     detected_objects = util.smooth_objects(pickle.load(in_file))
+  util.align_objects_to_screen(video_idx, detected_objects)
 
   experiment_data = (load_and_preprocess_data
                      .load_participant(participant_idx)
@@ -47,10 +71,14 @@ def play_experiment_video(participant_idx, video_idx):
   videoStartTime = time.time()
   nextFrameExists, frame = video.read() # Load first video frame
 
-  hmm_correct = np.zeros((len(hmm_mle),), dtype=bool)
+  # Keep track of HMM decoding performance
+  hmm_correct = []
+  last_switch_frame = 0
+  previous_target = experiment_data.frames[0].target
   
   while nextFrameExists and current_frame < len(experiment_data.frames):
     if time.time() > videoStartTime + current_frame * delay:
+      frame = _rescale_video_to_screen(frame)
 
       # Plot gaze
       try:
@@ -70,15 +98,22 @@ def play_experiment_video(participant_idx, video_idx):
       # Plot true target and HMM estimate
       target = experiment_data.frames[current_frame].target
       hmm_estimate = hmm_mle[current_frame]
-      if target != hmm_estimate:
+      hmm_is_correct = (target == hmm_estimate)
+      if hmm_is_correct:
+        # Plot estimated object in white
+        _plot_object(frame, hmm_estimate, color=(255, 255, 255))
+      else:
         # Plot target object in red
         _plot_object(frame, target, color=(0, 0, 255))
         # Plot estimated object in green
         _plot_object(frame, hmm_estimate, color=(0, 255, 0))
-      else:
-        # Plot estimated object in white
-        _plot_object(frame, hmm_estimate, color=(255, 255, 255))
-        hmm_correct[current_frame] = True
+
+      if target != previous_target:
+        previous_target = target
+        last_switch_frame = current_frame
+      if current_frame >= last_switch_frame + GRACE_PERIOD:
+        # Only count performance on frames outside the grace period
+        hmm_correct.append(hmm_is_correct)
 
       cv2.imshow('Video Frame', frame) # Display current frame
       cv2.waitKey(1)
@@ -88,7 +123,7 @@ def play_experiment_video(participant_idx, video_idx):
   video.release()
   cv2.destroyAllWindows()
 
-  print('HMM accuracy: {}'.format(hmm_correct.mean()))
+  print('HMM accuracy: {}'.format(np.mean(hmm_correct)))
 
 
 if __name__ == '__main__':
