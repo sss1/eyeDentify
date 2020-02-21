@@ -6,9 +6,9 @@ import numpy as np
 
 from centroidtracker import CentroidTracker, calc_centroid
 
-# For simplicity, we hard-coded these values
-screen_width = 1920
-screen_height = 1200
+# for simplicity, we hard-coded these values
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1200
 
 def _smooth_objects(all_frames):
   tracker_list = [] 
@@ -18,26 +18,30 @@ def _smooth_objects(all_frames):
   print('Unique object types: ' + str(unique_obj_types))
 
   # Initialize a centroid tracker for each object type
-  trackers = {obj_type : CentroidTracker(maxDisappeared = 15) for obj_type in unique_obj_types}
+  trackers = {obj_type : CentroidTracker(maxDisappeared = 15)
+              for obj_type in unique_obj_types}
 
   for (frame_idx, frame) in enumerate(all_frames):
 
     new_frame_list = []
     for obj_type in unique_obj_types:
       # Update the centroid tracker
-      trackers[obj_type].update([obj['box_points'] for obj in frame if obj['name'] is obj_type])
+      trackers[obj_type].update([obj['box_points'] for obj in frame
+                                 if obj['name'] is obj_type])
 
       for (ID, centroid) in trackers[obj_type].objects.items():
         new_ID = obj_type + '_' + str(ID) # Concatenate object type with object ID
         for obj in frame:
           if obj['name'] is obj_type:
-          # Since we need to output (ID, bounding box) and Centroid Tracker doesn't record bounding boxes
-          # match each ID with its bounding box by centroid; this solution implicitly assumes each object of a
+          # Since we need to output (ID, bounding box) and Centroid Tracker
+          # doesn't record bounding boxes match each ID with its bounding box by
+          # centroid; this solution implicitly assumes each object of a
           # specified type within each frame has a distinct centroid
             obj_centroid = calc_centroid(obj['box_points'])
             if (abs(obj_centroid[0] - centroid[0]) < sys.float_info.epsilon) and \
                  (abs(obj_centroid[1] - centroid[1]) < sys.float_info.epsilon):
-              new_frame_list.append((new_ID, obj['box_points'], obj['percentage_probability']))
+              new_frame_list.append((new_ID, obj['box_points'],
+                                     obj['percentage_probability']))
 
     tracker_list.append(new_frame_list)
 
@@ -60,8 +64,10 @@ def _compute_durations(tracker_list):
 def _interpolate_missing_frames(target_list):
   prev_good_frame = 0
   for frame_idx in range(len(target_list)):
-    if prev_good_frame < frame_idx - 1: # if previous frames were missing
-      if target_list[frame_idx] is not None: # if current frame is non-missing, we need to interpolate till here
+    if prev_good_frame < frame_idx - 1:
+      # If previous frames were missing
+      if target_list[frame_idx] is not None:
+        # If current frame is non-missing, we need to interpolate till here
 
         # Objects should only change on non-missing frames
         target_name = target_list[prev_good_frame][0]
@@ -74,12 +80,14 @@ def _interpolate_missing_frames(target_list):
           num_parts = frame_idx - prev_good_frame
           for frame_to_interpolate in range(prev_good_frame + 1, frame_idx):
             interpolation_idx = frame_to_interpolate - prev_good_frame
-            interpolate = lambda x, y : int(x + interpolation_idx/num_parts * (y - x))
+            interpolate = (lambda x, y :
+                           int(x + interpolation_idx/num_parts * (y - x)))
             interpolated_box = (interpolate(prev_good_box[0], current_box[0]),
                                 interpolate(prev_good_box[1], current_box[1]),
                                 interpolate(prev_good_box[2], current_box[2]),
                                 interpolate(prev_good_box[3], current_box[3]))
-            target_list[frame_to_interpolate] = (target_name, interpolated_box, float('nan'))
+            target_list[frame_to_interpolate] = (target_name, interpolated_box,
+                                                 float('nan'))
 
     if target_list[frame_idx] is not None:
       # All frames before (and including) frame_idx have been filled in
@@ -87,15 +95,18 @@ def _interpolate_missing_frames(target_list):
 
   return target_list
 
-def _sample_targets(tracker_list, object_durations, min_duration = 30, mean_duration = 45):
+def _sample_targets(tracker_list, object_durations, min_duration = 30,
+                    mean_duration = 45):
   target_list = []
   next_switch_frame = -1
   for (frame_idx, frame_objects) in enumerate(tracker_list):
 
     if frame_idx > next_switch_frame:
-      # Weight each object by its remaining duration to prefer longer-lasting objects
-      weights = np.array([object_durations[obj[0]][1] - frame_idx for obj in tracker_list[frame_idx]])
-      if np.sum(weights) < sys.float_info.epsilon: # No objects were found in tracker_list
+      # Weight objects by remaining duration to prefer longer-lasting objects
+      weights = np.array([object_durations[obj[0]][1] - frame_idx
+                          for obj in tracker_list[frame_idx]])
+      if np.sum(weights) < sys.float_info.epsilon:
+        # No objects in tracker_list
         target_list.append(None)
         continue
       weights = weights / weights.sum()
@@ -103,15 +114,17 @@ def _sample_targets(tracker_list, object_durations, min_duration = 30, mean_dura
       current_target = tracker_list[frame_idx][current_target_idx][0]
       next_switch_frame = object_durations[current_target][1]
       next_switch_frame = min(next_switch_frame,
-                              frame_idx + min_duration + int(np.random.exponential(mean_duration)))
+                              (frame_idx + min_duration
+                               + int(np.random.exponential(mean_duration))))
       attempt = 0
       while current_target not in [obj[0] for obj in tracker_list[next_switch_frame]]:
         attempt += 1
         # if attempt % 100 == 0:
         #   print(attempt)
         if attempt > 1000:
-          # For some objects/frames, we may not be able to find a valid next_swith_frame even after many attempts.
-          # In this case, simply switch on the very next frame
+          # For some objects/frames, we may not be able to find a valid
+          # next_swith_frame even after many attempts. In this case, simply
+          # switch on the very next frame.
           next_switch_frame = frame_idx
           break
         next_switch_frame = min(next_switch_frame,
@@ -128,7 +141,8 @@ def _sample_targets(tracker_list, object_durations, min_duration = 30, mean_dura
 
   return _interpolate_missing_frames(target_list)
 
-data_dir = 'C:/Users/infant lab user/Desktop/eyeDentify/data/'
+detected_objects_dir = 'C:/Users/infant lab user/Desktop/eyeDentify/data/detected_objects/'
+video_dir = 'C:/Users/infant lab user/Desktop/eyeDentify/data/MOT17_videos/'
 
 def smooth_and_display_objects(video_idx, confidence_threshold):
 
@@ -140,14 +154,15 @@ def smooth_and_display_objects(video_idx, confidence_threshold):
   print('Playing video {idx} at confidence {conf}'.format(idx=video_idx,
                                                           conf=confidence_threshold))
   
+  detected_objects_dir = 
   # Load object data, smooth over time, and select a sequence of targets
-  with open(data_dir + 'detected_objects/' + detected_objects_fname, 'rb') as in_file:
+  with open(detected_objects_dir + detected_objects_fname, 'rb') as in_file:
     all_frames = pickle.load(in_file)
   tracker_list = _smooth_objects(all_frames)
   object_durations = _compute_durations(tracker_list)
   target_list = _sample_targets(tracker_list, object_durations)
 
-  video = cv2.VideoCapture(data_dir + 'MOT17_videos/' + video_fname)
+  video = cv2.VideoCapture(video_dir + video_fname)
 
   # Get basic video information
   FPS = video.get(cv2.CAP_PROP_FPS) # natural frame rate
@@ -161,33 +176,39 @@ def smooth_and_display_objects(video_idx, confidence_threshold):
   videoStartTime = time.time()
   videoIsPlaying = True
   nextFrameExists, frame = video.read() # Load first video frame
-  video_height, video_width, _ =  frame.shape
+  video_height, video_width, _ = frame.shape
 
-  # Recale video to be as large as possible while fitting on screen without changing aspect ratio
-  scale = min(screen_height/video_height, screen_width/video_width)
+  # Recale video to be as large as possible while fitting on screen without
+  # changing aspect ratio
+  scale = min(SCREEN_HEIGHT/video_height, SCREEN_WIDTH/video_width)
   scaled_width = int(scale * video_width)
   scaled_height = int(scale * video_height)
   frame = cv2.resize(frame, (scaled_width, scaled_height)) # rescale video to fit screen
 
   # Pad the remaining screen space with black space
-  top_padding = max(0, int((screen_height - scaled_height)/2))
-  left_padding = max(0, int((screen_width - scaled_width)/2))
+  top_padding = max(0, int((SCREEN_HEIGHT - scaled_height)/2))
+  left_padding = max(0, int((SCREEN_WIDTH - scaled_width)/2))
   border_color = (0, 0, 0) # black border
-  frame = cv2.copyMakeBorder(frame, top_padding, screen_height - (scaled_height + top_padding),
-                             left_padding, screen_width - (scaled_width + left_padding),
-                             borderType=cv2.BORDER_CONSTANT, value=border_color)
+  frame = cv2.copyMakeBorder(frame,
+                             top_padding,
+                             SCREEN_HEIGHT - (scaled_height + top_padding),
+                             left_padding,
+                             SCREEN_WIDTH - (scaled_width + left_padding),
+                             borderType=cv2.BORDER_CONSTANT,
+                             value=border_color)
                      
   timestamped_target_list = [] # List of timestamped targets to output
   current_time = centroid = object_ID = horz_rad = \
-    vert_rad = target_conf = None # all the frame-specific variables we'll be outputting
+    vert_rad = target_conf = None # all frame-specific variables to output
    
   print("Playing video...")
 
   # Used to that eye-tracker and video are spatially calibrated
-  fixation_point = None #(int(3*screen_width/4), int(3*screen_height/4))
+  fixation_point = None
   print('Fixation Coordinates:', fixation_point)
 
-  while nextFrameExists: # While there are more frames to display, continue displaying video
+  # While there are more frames to display, continue displaying video
+  while nextFrameExists:
     current_time = time.time()
     if current_time > videoStartTime + current_frame * delay:
         cv2.imshow('Video Frame', frame) # Display current frame
@@ -196,9 +217,9 @@ def smooth_and_display_objects(video_idx, confidence_threshold):
         if centroid is not None:
           timestamped_target_list.append([current_time,
                                           video_idx,
-                                          confidence_threshold, # Threshold for this stimulus
+                                          confidence_threshold,
                                           object_ID,
-                                          target_conf, # Confidence of this specific target
+                                          target_conf,
                                           centroid[0],
                                           centroid[1],
                                           horz_rad,
@@ -209,7 +230,8 @@ def smooth_and_display_objects(video_idx, confidence_threshold):
         
         if nextFrameExists:
           frame = cv2.resize(frame, (scaled_width, scaled_height)) # rescale video to fit screen
-          frame = cv2.copyMakeBorder(frame, top_padding, top_padding, left_padding, left_padding,
+          frame = cv2.copyMakeBorder(frame, top_padding, top_padding,
+                                     left_padding, left_padding,
                                      borderType=cv2.BORDER_CONSTANT, value=0)
 
           # Draw ellipse around and label target object
@@ -217,8 +239,6 @@ def smooth_and_display_objects(video_idx, confidence_threshold):
             object_ID, b, target_conf = target_list[current_frame]
             centroid = calc_centroid(b)
             centroid = (int(scale * centroid[0]) + left_padding, int(scale * centroid[1]) + top_padding)
-            # cv2.putText(frame, object_ID, (centroid[0] - 10, centroid[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-            #             (0, 255, 0), 2)
             horz_rad = int(scale * (b[2] - b[0])/2)
             vert_rad = int(scale * (b[3] - b[1])/2)
             target_color = (0, 255, 0) # bright green
@@ -237,30 +257,36 @@ print('Start this 2nd!\n\n')
 participant_id = input('Enter participant ID: ')
 
 # Construct output file path
-today = str(datetime.now().month) + "-" + str(datetime.now().day) + "-" + str(datetime.now().year)
+today = (str(datetime.now().month)
+         + "-" + str(datetime.now().day)
+         + "-" + str(datetime.now().year)
 time_now = str(datetime.now().hour) + "_" + str(datetime.now().minute)
 file_name = participant_id + "_stimulus_" + today + "_" + time_now + '.csv'
 print('Outputting stimulus data to ' + file_name)
 with open(file_name, 'w') as outfile:
 
   writer = csv.writer(outfile, delimiter = ',')
-  title = ["Participant ID: " + participant_id, "Date: " + today, "Time: " + time_now]
-  heading = ["ComputerClock_Timestamp", "Video_Index", "Object_Detection_Threshold", "Target_Name", "Target_Confidence", "TargetX", "TargetY", "TargetXRadius", "TargetYRadius"]
+  title = ["Participant ID: " + participant_id, "Date: " + today,
+           "Time: " + time_now]
+  heading = ["ComputerClock_Timestamp", "Video_Index",
+             "Object_Detection_Threshold", "Target_Name", "Target_Confidence",
+             "TargetX", "TargetY", "TargetXRadius", "TargetYRadius"]
   writer.writerow(title)
   writer.writerow(heading)
 
   # Create fullscreen video display window
-  black_screen = np.zeros((screen_width, screen_height, 3))
+  black_screen = np.zeros((SCREEN_WIDTH, SCREEN_HEIGHT, 3))
   cv2.line(black_screen,
-           (int(screen_height/2)-10, int(screen_width/2)),
-           (int(screen_height/2)+10, int(screen_width/2)),
+           (int(SCREEN_HEIGHT/2)-10, int(SCREEN_WIDTH/2)),
+           (int(SCREEN_HEIGHT/2)+10, int(SCREEN_WIDTH/2)),
            (255, 255, 255), 3, cv2.LINE_AA)
   cv2.line(black_screen,
-           (int(screen_height/2), int(screen_width/2)-20),
-           (int(screen_height/2), int(screen_width/2)+20),
+           (int(SCREEN_HEIGHT/2), int(SCREEN_WIDTH/2)-20),
+           (int(SCREEN_HEIGHT/2), int(SCREEN_WIDTH/2)+20),
            (255, 255, 255), 2, cv2.LINE_AA)
   cv2.namedWindow('Video Frame', cv2.WND_PROP_FULLSCREEN)
-  cv2.setWindowProperty('Video Frame', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+  cv2.setWindowProperty('Video Frame', cv2.WND_PROP_FULLSCREEN,
+                        cv2.WINDOW_FULLSCREEN)
   cv2.imshow('Video Frame', black_screen)
   cv2.waitKey(5000)
 
@@ -277,8 +303,8 @@ with open(file_name, 'w') as outfile:
       continue
     
     # Display next video and record target data
-    output = smooth_and_display_objects(video_idx=video_idx,
-                                        confidence_threshold=confidence_threshold)
+    output = smooth_and_display_objects(
+        video_idx=video_idx, confidence_threshold=confidence_threshold)
 
     # Display black screen for 5 seconds between each video
     cv2.imshow('Video Frame', black_screen)
