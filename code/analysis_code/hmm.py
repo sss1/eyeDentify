@@ -6,13 +6,12 @@ import numpy
 import math
 from typing import Dict, List, NewType, Tuple
 
-import experiment_frame
-import object_frame
+from classes.object_frame import ObjectFrame
 
 # A single cell in the dynamic programming table
 Cell = namedtuple('Cell', ['partial_max_log_likelihood', 'predecessor'])
 
-FrameTable = NewType('FrameTable', Dict[object_frame.ObjectFrame, Cell])
+FrameTable = NewType('FrameTable', Dict[ObjectFrame, Cell])
 
 def max_likelihood_key(frame_table: FrameTable):
     return lambda obj: frame_table[obj].partial_max_log_likelihood
@@ -43,7 +42,7 @@ class _HMM:
     self.log_likelihood_table = []
 
   def forwards_update(self, gaze: Tuple[float, float],
-                      objects_in_frame: List[object_frame.ObjectFrame]):
+                      objects_in_frame: List[ObjectFrame]):
     """Performs an update step of the forwards algorithm based on input data.
 
     Args:
@@ -64,7 +63,7 @@ class _HMM:
 
   def _compute_next_frame_table(
           self, prev_frame_table: FrameTable, gaze: Tuple[float, float],
-          objects_in_frame: List[object_frame.ObjectFrame]):
+          objects_in_frame: List[ObjectFrame]):
     """Computes a frame_table using a previous frame table.
 
     Args:
@@ -75,6 +74,8 @@ class _HMM:
     to frames where the tracked object disappears.
     """
     num_new_objects = len(objects_in_frame)
+    if math.isnan(gaze[0]) or math.isnan(gaze[1]):
+      return {None : Cell(0.0, None)}
     new_frame_table = {obj : Cell(float('-inf'), None)
                        for obj in objects_in_frame}
 
@@ -104,7 +105,7 @@ class _HMM:
           new_frame_table[new_obj] = Cell(new_partial_log_likelihood, prev_obj)
     return new_frame_table
 
-  def backwards(self) -> List[object_frame.ObjectFrame]:
+  def backwards(self) -> List[ObjectFrame]:
     """Runs the backwards algorithm to compute the object sequence MLE.
 
     Returns:

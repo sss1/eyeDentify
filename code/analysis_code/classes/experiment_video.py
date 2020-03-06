@@ -1,13 +1,13 @@
 """This module specifies the ExperimentVideo class."""
 
+import numpy as np
 from typing import List
 
-import experiment_frame
+from classes.experiment_frame import ExperimentFrame
 
 class ExperimentVideo:
   """Eye-tracking and target information for a single video."""
-  def __init__(self, video_idx: int,
-               frames: List[experiment_frame.ExperimentFrame]):
+  def __init__(self, video_idx: int, frames: List[ExperimentFrame]):
     """Initialize with target information; eyetrack is added later.
     
     Args:
@@ -17,3 +17,5 @@ class ExperimentVideo:
     """
     self.video_idx = video_idx
     self.frames = frames
+    self.proportion_missing = np.mean(
+        [frame.gaze_is_missing for frame in frames])

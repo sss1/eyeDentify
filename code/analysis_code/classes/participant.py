@@ -1,13 +1,14 @@
 """This module specifies the Participant class."""
 
+import numpy as np
 from typing import List
 
-import experiment_video
+from classes.experiment_video import ExperimentVideo
 
 class Participant:
   """All data specific to a single participant's experiment.
   """
-  def __init__(self, ID: int, videos: List[experiment_video.ExperimentVideo]):
+  def __init__(self, ID: int, videos: List[ExperimentVideo]):
     """
     Args:
       ID: Participant ID
@@ -15,3 +16,5 @@ class Participant:
     """
     self.ID = ID
     self.videos = videos
+    self.mean_proportion_missing = np.mean(
+        [video.proportion_missing for video in videos])

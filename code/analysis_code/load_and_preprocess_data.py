@@ -5,10 +5,10 @@ import numpy as np
 from typing import List, Tuple
 
 import util
-import experiment_frame
-import experiment_video
-import object_frame
-import participant
+import classes.experiment_video as experiment_video
+import classes.participant as participant
+import classes.experiment_frame as experiment_frame
+import classes.object_frame as object_frame
 
 experiment_data_dir = '../../data/experiment1/'
 VIDEOS = range(1, 15)
@@ -100,12 +100,8 @@ def synchronize_eyetracking_with_stimulus(eyetrack, frames):
 def load_participant(participantID: int) -> participant.Participant:
 
   eyetrack = load_eyetrack(participantID)
-  print('# of NaNs before interpolation: {}'.format(np.count_nonzero(
-      np.isnan(eyetrack))))
   frames = load_stimulus(participantID)
   util.impute_missing_data_D(eyetrack, max_len = 10)
-  print('# of NaNs after  interpolation: {}\n'.format(np.count_nonzero(
-      np.isnan(eyetrack))))
   synchronize_eyetracking_with_stimulus(eyetrack, frames)
 
   videos = []

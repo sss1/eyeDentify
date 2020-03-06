@@ -5,7 +5,7 @@ import sys
 from typing import List, Tuple
 
 import centroidtracker
-import object_frame
+from classes.object_frame import ObjectFrame
 
 
 def impute_missing_data_D(X, max_len = 10):
@@ -47,7 +47,7 @@ def __impute_missing_data(X, max_len):
 
 # Given a list (over frames) of objects detected by the object detector in each frame,
 # Stitches them together into object tracking data
-def smooth_objects(all_frames) -> List[List[object_frame.ObjectFrame]]:
+def smooth_objects(all_frames) -> List[List[ObjectFrame]]:
   tracker_list = [] 
   # Since we assume that objects cannot change types, we separately run the
   # object tracking algorithm for each object type
@@ -73,7 +73,7 @@ def smooth_objects(all_frames) -> List[List[object_frame.ObjectFrame]]:
             obj_centroid = calc_centroid(obj['box_points'])
             size = calc_size(obj['box_points'])
             if max(abs(obj_centroid[0] - centroid[0]), abs(obj_centroid[1] - centroid[1])) < sys.float_info.epsilon:
-              new_frame_list.append(object_frame.ObjectFrame(obj_type, ID, obj_centroid, size))
+              new_frame_list.append(ObjectFrame(obj_type, ID, obj_centroid, size))
 
     tracker_list.append(new_frame_list)
 
@@ -139,7 +139,7 @@ SCREEN_SIZE = (1200, 1920) # Resolution of stimulus display
 
 def align_objects_to_screen(
     video_idx: int,
-    detected_objects: List[List[object_frame.ObjectFrame]]):
+    detected_objects: List[List[ObjectFrame]]):
   """Rescale objects from the original video size to the stimulus screen size.
 
   During data collection, the video was rescaled to be as large as possible

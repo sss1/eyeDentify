@@ -6,7 +6,7 @@ import time
 
 import hmm
 import load_and_preprocess_data
-import object_frame
+from classes.object_frame import ObjectFrame
 import util
 
 SIGMA = 1
@@ -37,7 +37,7 @@ def _rescale_video_to_screen(frame: np.ndarray):
                             SCREEN_WIDTH - (scaled_width + left_padding),
                             borderType=cv2.BORDER_CONSTANT, value=(0, 0, 0))
 
-def _plot_object(frame: np.ndarray, obj: object_frame.ObjectFrame, color):
+def _plot_object(frame: np.ndarray, obj: ObjectFrame, color):
   if obj is not None:
     cv2.ellipse(frame, center=obj.centroid, axes=obj.size, angle=0,
                 startAngle=0, endAngle=360, color=color, thickness = 2)

@@ -2,12 +2,12 @@
 
 import math
 
-import object_frame
+from classes.object_frame import ObjectFrame
 
 class ExperimentFrame:
   """Eye-tracking and target information for a single frame."""
   def __init__(self, video_idx: int, t: float, video_frame: int,
-               target: object_frame.ObjectFrame):
+               target: ObjectFrame):
     """Initialize with target information; eyetrack is added later.
     
     Args:
@@ -22,6 +22,7 @@ class ExperimentFrame:
     self.video_frame = video_frame
 
   def set_eyetrack(self, gaze_x, gaze_y, diam):
+    """Sets gaze position and pupil diameter."""
     self.gaze = (gaze_x, gaze_y)
     self.gaze_is_missing = math.isnan(gaze_x) or math.isnan(gaze_y)
     self.diam = diam
