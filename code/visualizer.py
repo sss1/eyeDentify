@@ -10,7 +10,7 @@ from classes.object_frame import ObjectFrame
 import util
 
 SIGMA = 1
-TAU = 0.9
+TAU = 0.99
 VIDEO_DIR = '../../data/MOT17_videos/'
 DETECTED_OBJECTS_DIR = '../../data/detected_objects/'
 
@@ -127,4 +127,4 @@ def play_experiment_video(participant_idx, video_idx):
 
 
 if __name__ == '__main__':
-  play_experiment_video(0, 1)
+  play_experiment_video(participant_idx=11, video_idx=2)
