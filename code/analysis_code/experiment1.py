@@ -1,22 +1,34 @@
-# This module performs the analyses for Experiment 1: Guided Viewing with Detected Targets
+"""This module performs analyses for Experiment 1: Guided Viewing with Detected Targets."""
 import numpy as np
 import pickle
 
 import hmm
-import load_and_preprocess_data
+from load_and_preprocess_data import load_participant
+import metrics
 import util
 
+# Preprocessing parameters
+MAX_MISSING_PROPORTION = 0.25
+
+# HMM hyperparameters
 SIGMA = 1
 TAU = 0.9
 
 VIDEOS = range(1, 15)
-NUM_PARTICIPANTS = 1
+PARTICIPANTS = range(12)
 
 DETECTION_DATA_DIR = '../../data/detected_objects'
 
 # Load participant data
-participants = [load_and_preprocess_data.load_participant(i) for i in range(NUM_PARTICIPANTS)]
-print('Loaded data from {} participants.'.format(NUM_PARTICIPANTS))
+participants = [load_participant(i) for i in PARTICIPANTS]
+print('Loaded data from {} participants.'.format(len(PARTICIPANTS)))
+
+# Discard participants with too much missing data
+participants = [participant for participant in participants
+                if participant.mean_proportion_missing < MAX_MISSING_PROPORTION]
+
+print('Keeping {} participants: {}'
+      .format(len(participants), [p.ID for p in participants]))
 
 # Load object detection data
 detected_objects = []
@@ -26,11 +38,27 @@ for video_idx in VIDEOS:
   print('Loading object detection data from {}...'.format(detection_data_fname))
   with open(detection_data_fname, 'rb') as in_file:
     all_frames = pickle.load(in_file)
-  detected_objects.append(util.smooth_objects(all_frames))
+  detected_video_objects = util.smooth_objects(all_frames)
+  util.align_objects_to_screen(video_idx, detected_video_objects)
+  detected_objects.append(detected_video_objects)
 
+participant_accuracies = []
 for participant in participants:
-  for (experiment_video, video_objects) in zip(participant.videos, detected_objects):
+  print('Running participant {}...'.format(participant.ID))
+  participant_videos = [participant.videos[i-1] for i in VIDEOS]
+  video_accuracies = []
+  for (experiment_video, video_objects) \
+          in zip(participant_videos, detected_objects):
+
     mle = hmm.forwards_backwards(SIGMA, TAU, experiment_video, video_objects)
     ground_truth = [frame.target for frame in experiment_video.frames]
-    print(np.mean([frame_target == frame_mle
-                   for (frame_target, frame_mle) in zip(ground_truth, mle)]))
+
+    video_accuracies.append(metrics.compute_accuracy(mle, ground_truth))
+  participant_accuracy_mean, participant_accuracy_ste = metrics.mean_and_ste(
+          video_accuracies)
+  print('Participant accuracy: {} +/- {}'.format(participant_accuracy_mean,
+                                                 participant_accuracy_ste))
+  participant_accuracies.append(participant_accuracy_mean)
+
+accuracy_mean, accuracy_ste = metrics.mean_and_ste(participant_accuracies)
+print('Overall accuracy: {} +/- {}'.format(accuracy_mean, accuracy_ste))
