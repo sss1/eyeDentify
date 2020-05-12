@@ -1,6 +1,9 @@
 # Example video output by object detector
 code/object_detector/labeled_video.avi
 
+# Temporary output files
+*.out
+
 # Data files
 data/
 

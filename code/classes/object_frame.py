@@ -3,13 +3,14 @@
 import numpy as np
 import scipy.stats as stats
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 class ObjectFrame:
   """Information about a single object in a single frame."""
   def __init__(self, class_name: str, object_index: int,
                centroid: Tuple[float, float],
-               size: Tuple[float, float]):
+               size: Tuple[float, float],
+               confidence: Optional[float] = None):
     """Initialize an ObjectFrame object.
 
     Args:
@@ -20,11 +21,14 @@ class ObjectFrame:
         identifies a object (which may last multiple frames) within a video
       centroid: (x, y)-coordinates of center of object bounding box
       size: (half-width, half-height) of object bounding box
+      confidence: Confidence of object detector in labeling this object in this
+        frame
     """
     self.class_name = class_name
     self.object_index = object_index
     self.centroid = centroid
     self.size = size
+    self.detection_confidence = confidence
 
   def __eq__(self, other):
     """Two ObjectFrames are considered equal if they represent the same
@@ -37,10 +41,9 @@ class ObjectFrame:
     return hash((self.class_name, self.object_index))
 
   def __str__(self):
-    return 'Object "{} {}" at position {}, size {}.'.format(self.class_name,
-                                                            self.object_index,
-                                                            self.centroid,
-                                                            self.size)
+    return ('Object "{} {}" at position {}, size {}, confidence {}.'
+            .format(self.class_name, self.object_index, self.centroid,
+                    self.size, self.detection_confidence))
 
   def log_emission_density(self, gaze: Tuple[float, float], sigma: float):
     """Returns the value of the object's emission density at a point.

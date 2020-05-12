@@ -15,9 +15,30 @@ SIGMA = 1
 TAU = 0.9
 
 VIDEOS = range(1, 15)
-PARTICIPANTS = range(12)
+PARTICIPANTS = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    13,
+    14,
+    15,
+    16,
+]
 
-DETECTION_DATA_DIR = '../../data/detected_objects'
+print('Parameters:')
+print('SIGMA: {}\nTAU: {}\nVIDEOS: {}\nPARTICIPANTS: {}'
+      .format(SIGMA, TAU, VIDEOS, PARTICIPANTS))
+
+DETECTION_DATA_DIR = '../data/detected_objects'
 
 # Load participant data
 participants = [load_participant(i) for i in PARTICIPANTS]
@@ -52,8 +73,10 @@ for participant in participants:
 
     mle = hmm.forwards_backwards(SIGMA, TAU, experiment_video, video_objects)
     ground_truth = [frame.target for frame in experiment_video.frames]
+    video_accuracy = metrics.compute_accuracy(mle, ground_truth)
+    print('Video {} accuracy: {}'.format(experiment_video.video_idx, video_accuracy))
+    video_accuracies.append(video_accuracy)
 
-    video_accuracies.append(metrics.compute_accuracy(mle, ground_truth))
   participant_accuracy_mean, participant_accuracy_ste = metrics.mean_and_ste(
           video_accuracies)
   print('Participant accuracy: {} +/- {}'.format(participant_accuracy_mean,

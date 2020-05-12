@@ -10,8 +10,9 @@ import classes.participant as participant
 import classes.experiment_frame as experiment_frame
 import classes.object_frame as object_frame
 
-experiment_data_dir = '../../data/experiment1/'
+experiment_data_dir = '../data/experiment1/'
 VIDEOS = range(1, 15)
+DETECTION_THRESHOLD = 60.0
 
 def load_eyetrack(participantID : int) -> np.ndarray:
   fname = experiment_data_dir + str(participantID).zfill(2) + '_eyetracking.csv'
@@ -66,12 +67,21 @@ def load_stimulus(participantID: int) -> List[experiment_frame.ExperimentFrame]:
         t *= 1000
       target_centroid = (int(row.TargetX), int(row.TargetY))
       target_size = (int(row.TargetXRadius), int(row.TargetYRadius))
+
+      try:  # Only newer recordings include confidence data
+        object_detection_threshold = float(row.Object_Detection_Threshold)
+        target_confidence = float(row.Target_Confidence)
+      except AttributeError:
+        object_detection_threshold = 60.0
+        target_confidence = float('nan')
+
       target = object_frame.ObjectFrame(target_class_name,
                                         target_object_index,
                                         target_centroid,
-                                        target_size)
-      frames.append(experiment_frame.ExperimentFrame(video_idx, t, video_frame,
-                                                     target))
+                                        target_size,
+                                        target_confidence)
+      frames.append(experiment_frame.ExperimentFrame(
+          video_idx, t, video_frame, target, object_detection_threshold))
       video_frame += 1
   return frames
 
@@ -107,6 +117,7 @@ def load_participant(participantID: int) -> participant.Participant:
   videos = []
   for video_idx in VIDEOS:
     videos.append(experiment_video.ExperimentVideo(
-        video_idx, [f for f in frames if f.video_idx == video_idx]))
+        video_idx, [f for f in frames if f.video_idx == video_idx
+            and f.detection_threshold == DETECTION_THRESHOLD]))
 
   return participant.Participant(participantID, videos)
