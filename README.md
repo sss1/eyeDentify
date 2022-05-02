@@ -48,8 +48,6 @@ Target changes).
 For this study, we used 14 publicly available videos from the
 [MOT17 Challenge](https://motchallenge.net/data/MOT17/).
 
-Ground truth labels for each participant are provided
-
 Eyetracking data and ground truth labels are not currently included in this
 repository, due to GitHub file size limits. This will be uploaded elsewhere.
 
