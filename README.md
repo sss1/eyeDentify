@@ -52,4 +52,8 @@ Eyetracking data and ground truth labels are not currently included in this
 repository, due to GitHub file size limits. This will be uploaded elsewhere.
 
 ## Technical Notes
-TODO
+This project is compatible with Python 3.9.5. Necessary packages are listed in
+`requirements.txt` and can be installed using
+```
+pip install -r requirements.txt
+```
