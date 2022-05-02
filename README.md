@@ -57,3 +57,20 @@ This project is compatible with Python 3.9.5. Necessary packages are listed in
 ```
 pip install -r requirements.txt
 ```
+
+## File overview
+The main codebase is in the `code/` directory. The most important code files are
+probably:
+
+`experiment1.py` runs an evaluattion of the HMM algorithm.
+
+`visualizer.py` generates and plays a video of the stimulus, overlaid with
+bounding boxes of the detected objects and the participants gaze.
+
+`load_and_preprocess_data.py` contains a `load_participant()` function that
+loads the eye-tracking and stimulus data for each participant.
+
+`display_experiment.py` was the original experiment script used to display the
+stimulus.
+
+`hmm.py` contains the main code of the HMM algorithm.
