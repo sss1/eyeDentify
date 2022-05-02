@@ -1,49 +1,223 @@
-Loading 30088 rows of eyetracking data from ../../data/experiment1/00_eyetracking.csv.
-Loading 58128 rows of eyetracking data from ../../data/experiment1/01_eyetracking.csv.
-Loading 30088 rows of eyetracking data from ../../data/experiment1/02_eyetracking.csv.
-Loading 36302 rows of eyetracking data from ../../data/experiment1/03_eyetracking.csv.
-Loading 48843 rows of eyetracking data from ../../data/experiment1/04_eyetracking.csv.
-Loading 58198 rows of eyetracking data from ../../data/experiment1/05_eyetracking.csv.
-Loading 20230 rows of eyetracking data from ../../data/experiment1/06_eyetracking.csv.
+Parameters:
+SIGMA: 1
+TAU: 0.9
+VIDEOS: range(1, 15)
+PARTICIPANTS: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16]
+Loading 30088 rows of eyetracking data from ../data/experiment1/00_eyetracking.csv.
+Loading 58128 rows of eyetracking data from ../data/experiment1/01_eyetracking.csv.
+Loading 30088 rows of eyetracking data from ../data/experiment1/02_eyetracking.csv.
+Loading 36302 rows of eyetracking data from ../data/experiment1/03_eyetracking.csv.
+Loading 48843 rows of eyetracking data from ../data/experiment1/04_eyetracking.csv.
+Loading 58198 rows of eyetracking data from ../data/experiment1/05_eyetracking.csv.
+Loading 20230 rows of eyetracking data from ../data/experiment1/06_eyetracking.csv.
 EYE-TRACKING STARTS 15.126794921875 SECONDS AFTER STIMULUS.
 EYE-TRACKING ENDS 305.39217236328125 SECONDS BEFORE STIMULUS.
-Loading 40478 rows of eyetracking data from ../../data/experiment1/07_eyetracking.csv.
-Loading 47758 rows of eyetracking data from ../../data/experiment1/08_eyetracking.csv.
-Loading 439 rows of eyetracking data from ../../data/experiment1/09_eyetracking.csv.
+Loading 40478 rows of eyetracking data from ../data/experiment1/07_eyetracking.csv.
+Loading 47758 rows of eyetracking data from ../data/experiment1/08_eyetracking.csv.
+Loading 439 rows of eyetracking data from ../data/experiment1/09_eyetracking.csv.
 EYE-TRACKING ENDS 680.9478125 SECONDS BEFORE STIMULUS.
-Loading 32207 rows of eyetracking data from ../../data/experiment1/10_eyetracking.csv.
+Loading 32207 rows of eyetracking data from ../data/experiment1/10_eyetracking.csv.
 EYE-TRACKING ENDS 141.460736328125 SECONDS BEFORE STIMULUS.
-Loading 39090 rows of eyetracking data from ../../data/experiment1/11_eyetracking.csv.
-Loaded data from 12 participants.
-Keeping 8 participants: [0, 1, 2, 4, 5, 7, 8, 11]
-Loading object detection data from ../../data/detected_objects/01.pickle...
-Loading object detection data from ../../data/detected_objects/02.pickle...
-Loading object detection data from ../../data/detected_objects/03.pickle...
-Loading object detection data from ../../data/detected_objects/04.pickle...
-Loading object detection data from ../../data/detected_objects/05.pickle...
-Loading object detection data from ../../data/detected_objects/06.pickle...
-Loading object detection data from ../../data/detected_objects/07.pickle...
-Loading object detection data from ../../data/detected_objects/08.pickle...
-Loading object detection data from ../../data/detected_objects/09.pickle...
-Loading object detection data from ../../data/detected_objects/10.pickle...
-Loading object detection data from ../../data/detected_objects/11.pickle...
-Loading object detection data from ../../data/detected_objects/12.pickle...
-Loading object detection data from ../../data/detected_objects/13.pickle...
-Loading object detection data from ../../data/detected_objects/14.pickle...
+Loading 39090 rows of eyetracking data from ../data/experiment1/11_eyetracking.csv.
+Loading 115964 rows of eyetracking data from ../data/experiment1/13_eyetracking.csv.
+Loading 41629 rows of eyetracking data from ../data/experiment1/14_eyetracking.csv.
+EYE-TRACKING ENDS 1258.3858200683594 SECONDS BEFORE STIMULUS.
+Loading 111777 rows of eyetracking data from ../data/experiment1/15_eyetracking.csv.
+Loading 113415 rows of eyetracking data from ../data/experiment1/16_eyetracking.csv.
+Loaded data from 16 participants.
+Keeping 11 participants: [0, 1, 2, 4, 5, 7, 8, 11, 13, 15, 16]
+Loading object detection data from ../data/detected_objects/01.pickle...
+Loading object detection data from ../data/detected_objects/02.pickle...
+Loading object detection data from ../data/detected_objects/03.pickle...
+Loading object detection data from ../data/detected_objects/04.pickle...
+Loading object detection data from ../data/detected_objects/05.pickle...
+Loading object detection data from ../data/detected_objects/06.pickle...
+Loading object detection data from ../data/detected_objects/07.pickle...
+Loading object detection data from ../data/detected_objects/08.pickle...
+Loading object detection data from ../data/detected_objects/09.pickle...
+Loading object detection data from ../data/detected_objects/10.pickle...
+Loading object detection data from ../data/detected_objects/11.pickle...
+Loading object detection data from ../data/detected_objects/12.pickle...
+Loading object detection data from ../data/detected_objects/13.pickle...
+Loading object detection data from ../data/detected_objects/14.pickle...
 Running participant 0...
-Participant accuracy: 0.7798065558858144 +/- 0.025522946810763315
+Video 1 accuracy: 0.8746268656716418
+Video 2 accuracy: 0.8771551724137931
+Video 3 accuracy: 0.8694869486948695
+Video 4 accuracy: 0.8138297872340425
+Video 5 accuracy: 0.7851500789889415
+Video 6 accuracy: 0.6745495495495496
+Video 7 accuracy: 0.8463356973995272
+Video 8 accuracy: 0.7055702917771883
+Video 9 accuracy: 0.7275449101796407
+Video 10 accuracy: 0.7592954990215264
+Video 11 accuracy: 0.9268929503916449
+Video 12 accuracy: 0.8110964332892999
+Video 13 accuracy: 0.7673076923076924
+Video 14 accuracy: 0.5784499054820416
+Participant accuracy: 0.7869494130286715 +/- 0.024166136398819073
 Running participant 1...
-Participant accuracy: 0.708233899313669 +/- 0.035805925762737556
+Video 1 accuracy: 0.8033240997229917
+Video 2 accuracy: 0.9356223175965666
+Video 3 accuracy: 0.7066666666666667
+Video 4 accuracy: 0.6921182266009852
+Video 5 accuracy: 0.7177177177177178
+Video 6 accuracy: 0.6134636264929425
+Video 7 accuracy: 0.693069306930693
+Video 8 accuracy: 0.8609271523178808
+Video 9 accuracy: 0.773371104815864
+Video 10 accuracy: 0.7235621521335807
+Video 11 accuracy: 0.6978723404255319
+Video 12 accuracy: 0.8028985507246377
+Video 13 accuracy: 0.39497307001795334
+Video 14 accuracy: 0.5104602510460251
+Participant accuracy: 0.7090033273721454 +/- 0.03531284351514571
 Running participant 2...
-Participant accuracy: 0.7798065558858144 +/- 0.025522946810763315
+Video 1 accuracy: 0.8746268656716418
+Video 2 accuracy: 0.8771551724137931
+Video 3 accuracy: 0.8694869486948695
+Video 4 accuracy: 0.8138297872340425
+Video 5 accuracy: 0.7851500789889415
+Video 6 accuracy: 0.6745495495495496
+Video 7 accuracy: 0.8463356973995272
+Video 8 accuracy: 0.7055702917771883
+Video 9 accuracy: 0.7275449101796407
+Video 10 accuracy: 0.7592954990215264
+Video 11 accuracy: 0.9268929503916449
+Video 12 accuracy: 0.8110964332892999
+Video 13 accuracy: 0.7673076923076924
+Video 14 accuracy: 0.5784499054820416
+Participant accuracy: 0.7869494130286715 +/- 0.024166136398819073
 Running participant 4...
-Participant accuracy: 0.7166939149334306 +/- 0.024754263238776972
+Video 1 accuracy: 0.8020833333333334
+Video 2 accuracy: 0.7368421052631579
+Video 3 accuracy: 0.8083182640144665
+Video 4 accuracy: 0.8082595870206489
+Video 5 accuracy: 0.6948148148148148
+Video 6 accuracy: 0.5029585798816568
+Video 7 accuracy: 0.6547619047619048
+Video 8 accuracy: 0.8742138364779874
+Video 9 accuracy: 0.7493606138107417
+Video 10 accuracy: 0.7279029462738301
+Video 11 accuracy: 0.6737160120845922
+Video 12 accuracy: 0.7252559726962458
+Video 13 accuracy: 0.5991649269311065
+Video 14 accuracy: 0.688588007736944
+Participant accuracy: 0.7175886360786736 +/- 0.024431406088592112
 Running participant 5...
-Participant accuracy: 0.7225438710671218 +/- 0.02606037451909414
+Video 1 accuracy: 0.6836461126005362
+Video 2 accuracy: 0.8113695090439277
+Video 3 accuracy: 0.8493273542600897
+Video 4 accuracy: 0.7861799217731421
+Video 5 accuracy: 0.7003205128205128
+Video 6 accuracy: 0.7113821138211383
+Video 7 accuracy: 0.7277227722772277
+Video 8 accuracy: 0.8803921568627451
+Video 9 accuracy: 0.5811764705882353
+Video 10 accuracy: 0.6692307692307692
+Video 11 accuracy: 0.7996742671009772
+Video 12 accuracy: 0.7584187408491947
+Video 13 accuracy: 0.6765873015873016
+Video 14 accuracy: 0.6349480968858131
+Participant accuracy: 0.7335982928358293 +/- 0.02180916168445782
 Running participant 7...
-Participant accuracy: 0.6996188724154845 +/- 0.023950591096488123
+Video 1 accuracy: 0.8013468013468014
+Video 2 accuracy: 0.5480984340044742
+Video 3 accuracy: 0.7448151487826871
+Video 4 accuracy: 0.7922814982973894
+Video 5 accuracy: 0.7613981762917933
+Video 6 accuracy: 0.5680539932508436
+Video 7 accuracy: 0.7713414634146342
+Video 8 accuracy: 0.7288135593220338
+Video 9 accuracy: 0.6639784946236559
+Video 10 accuracy: 0.525
+Video 11 accuracy: 0.7604456824512534
+Video 12 accuracy: 0.7708333333333334
+Video 13 accuracy: 0.6775300171526587
+Video 14 accuracy: 0.6790123456790124
+Participant accuracy: 0.6994963534250409 +/- 0.023958325184645236
 Running participant 8...
-Participant accuracy: 0.7208175381123086 +/- 0.030744398515004993
+Video 1 accuracy: 0.8603896103896104
+Video 2 accuracy: 0.7010526315789474
+Video 3 accuracy: 0.756120527306968
+Video 4 accuracy: 0.8221680876979294
+Video 5 accuracy: 0.6801675977653632
+Video 6 accuracy: 0.551487414187643
+Video 7 accuracy: 0.5343283582089552
+Video 8 accuracy: 0.8639455782312925
+Video 9 accuracy: 0.6451612903225806
+Video 10 accuracy: 0.7879464285714286
+Video 11 accuracy: 0.853021978021978
+Video 12 accuracy: 0.8119777158774373
+Video 13 accuracy: 0.6857638888888888
+Video 14 accuracy: 0.546594982078853
+Participant accuracy: 0.7214375777948483 +/- 0.030687150074234913
 Running participant 11...
-Participant accuracy: 0.6104382863386626 +/- 0.040570089098974034
-Overall accuracy: 0.7172449367440382 +/- 0.01753059633358736
+Video 1 accuracy: 0.9785522788203753
+Video 2 accuracy: 0.6359649122807017
+Video 3 accuracy: 0.656907593778591
+Video 4 accuracy: 0.6071942446043166
+Video 5 accuracy: 0.43243243243243246
+Video 6 accuracy: 0.5225733634311512
+Video 7 accuracy: 0.7185792349726776
+Video 8 accuracy: 0.45057471264367815
+Video 9 accuracy: 0.8228438228438228
+Video 10 accuracy: 0.6027944111776448
+Video 11 accuracy: 0.5007949125596184
+Video 12 accuracy: 0.6785206258890469
+Video 13 accuracy: 0.483402489626556
+Video 14 accuracy: 0.5234657039711191
+Participant accuracy: 0.6153286242165523 +/- 0.0391351347508719
+Running participant 13...
+Video 1 accuracy: 0.7351190476190477
+Video 2 accuracy: 0.7585365853658537
+Video 3 accuracy: 0.6545801526717557
+Video 4 accuracy: 0.9096774193548387
+Video 5 accuracy: 0.4467455621301775
+Video 6 accuracy: 0.4653846153846154
+Video 7 accuracy: 0.6206030150753769
+Video 8 accuracy: 0.8449905482041588
+Video 9 accuracy: 0.5800524934383202
+Video 10 accuracy: 0.8593406593406593
+Video 11 accuracy: 0.5201238390092879
+Video 12 accuracy: 0.6464646464646465
+Video 13 accuracy: 0.32091097308488614
+Video 14 accuracy: 0.5910780669144982
+Participant accuracy: 0.6395434017184375 +/- 0.04383390395987552
+Running participant 15...
+Video 1 accuracy: 0.5365853658536586
+Video 2 accuracy: 0.7066666666666667
+Video 3 accuracy: 0.7488584474885844
+Video 4 accuracy: 0.6797385620915033
+Video 5 accuracy: 0.5636998254799301
+Video 6 accuracy: 0.5558659217877095
+Video 7 accuracy: 0.30201342281879195
+Video 8 accuracy: 0.47808764940239046
+Video 9 accuracy: 0.4857142857142857
+/home/sss1/Desktop/projects/eyeDentify/venv/lib/python3.6/site-packages/numpy/core/fromnumeric.py:3257: RuntimeWarning: Mean of empty slice.
+  out=out, **kwargs)
+/home/sss1/Desktop/projects/eyeDentify/venv/lib/python3.6/site-packages/numpy/core/_methods.py:161: RuntimeWarning: invalid value encountered in double_scalars
+  ret = ret.dtype.type(ret / rcount)
+Video 10 accuracy: nan
+Video 11 accuracy: 0.8171428571428572
+Video 12 accuracy: 0.9322268326417704
+Video 13 accuracy: 0.17884615384615385
+Video 14 accuracy: 0.39278131634819535
+Participant accuracy: 0.5675559467140382 +/- 0.05386457646063852
+Running participant 16...
+Video 1 accuracy: 0.8431952662721893
+Video 2 accuracy: 0.6112469437652812
+Video 3 accuracy: 0.8263636363636364
+Video 4 accuracy: 0.7346647646219686
+Video 5 accuracy: 0.7981220657276995
+Video 6 accuracy: 0.7561274509803921
+Video 7 accuracy: 0.8771428571428571
+Video 8 accuracy: 0.8985239852398524
+Video 9 accuracy: 0.6692307692307692
+Video 10 accuracy: 0.8862275449101796
+Video 11 accuracy: 0.9569190600522193
+Video 12 accuracy: 0.9235209235209235
+Video 13 accuracy: 0.4377358490566038
+Video 14 accuracy: 0.6259259259259259
+Participant accuracy: 0.7746390744864644 +/- 0.03759294758111822
+Overall accuracy: 0.7047354600635795 +/- 0.020487746791499273

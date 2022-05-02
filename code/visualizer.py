@@ -20,6 +20,8 @@ SCREEN_HEIGHT = 1200
 # Allow participant 18 frames (300ms) to find new target after switch
 GRACE_PERIOD = 18
 
+SAVE_VIDEO_FILENAME = 'output.mp4'
+
 def _rescale_video_to_screen(frame: np.ndarray):
   """Rescale video to fit the screen on which the experiment was displayed."""
   video_height, video_width, _ = frame.shape
@@ -43,7 +45,7 @@ def _plot_object(frame: np.ndarray, obj: ObjectFrame, color):
                 startAngle=0, endAngle=360, color=color, thickness = 2)
   
 
-def play_experiment_video(participant_idx, video_idx):
+def play_experiment_video(participant_idx, video_idx, save_video=False):
 
   video_idx_str = str(video_idx).zfill(2)
 
@@ -75,6 +77,9 @@ def play_experiment_video(participant_idx, video_idx):
   hmm_correct = []
   last_switch_frame = 0
   previous_target = experiment_data.frames[0].target
+
+  if save_video:
+    out = cv2.VideoWriter(SAVE_VIDEO_FILENAME, -1, FPS/3, (640,480))
   
   while nextFrameExists and current_frame < len(experiment_data.frames):
     if time.time() > videoStartTime + current_frame * delay:
@@ -104,9 +109,9 @@ def play_experiment_video(participant_idx, video_idx):
         _plot_object(frame, hmm_estimate, color=(255, 255, 255))
       else:
         # Plot target object in red
-        _plot_object(frame, target, color=(0, 0, 255))
+        _plot_object(frame, target, color=(0, 255, 0))
         # Plot estimated object in green
-        _plot_object(frame, hmm_estimate, color=(0, 255, 0))
+        _plot_object(frame, hmm_estimate, color=(0, 0, 255))
 
       if target != previous_target:
         previous_target = target
@@ -115,11 +120,15 @@ def play_experiment_video(participant_idx, video_idx):
         # Only count performance on frames outside the grace period
         hmm_correct.append(hmm_is_correct)
 
+      if save_video:
+        out.write(frame)
       cv2.imshow('Video Frame', frame) # Display current frame
       cv2.waitKey(1)
       nextFrameExists, frame = video.read() # Load next video frame
       current_frame += 1
 
+  if save_video:
+    out.release()
   video.release()
   cv2.destroyAllWindows()
 
@@ -127,4 +136,4 @@ def play_experiment_video(participant_idx, video_idx):
 
 
 if __name__ == '__main__':
-  play_experiment_video(participant_idx=16, video_idx=12)
+  play_experiment_video(participant_idx=16, video_idx=1, save_video=True)

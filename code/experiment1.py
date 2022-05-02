@@ -12,7 +12,7 @@ MAX_MISSING_PROPORTION = 0.25
 
 # HMM hyperparameters
 SIGMA = 1
-TAU = 0.9
+TAU = 0.99
 
 VIDEOS = range(1, 15)
 PARTICIPANTS = [

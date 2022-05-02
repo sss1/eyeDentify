@@ -4,7 +4,7 @@ import pickle
 import util
 
 _VIDEOS = range(1, 15)
-_DETECTION_DATA_DIR = '../../data/detected_objects'
+_DETECTION_DATA_DIR = '../data/detected_objects'
 
 
 def main():
